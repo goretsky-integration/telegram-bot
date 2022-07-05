@@ -1,6 +1,7 @@
 import redis.asyncio as redis
 
 from config import app_settings
+from utils import logger
 
 __all__ = (
     'get_cookies',
@@ -21,3 +22,4 @@ async def get_access_token(account_name: str) -> str:
 
 async def close_redis_connection():
     await connection.close()
+    logger.debug('Redis connection has been closed')
