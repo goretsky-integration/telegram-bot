@@ -3,32 +3,35 @@ from aiogram.types import Message, CallbackQuery
 
 import db
 import models.database
+import responses
 from bot import dp
-from services import statistics_reports
+from services import filters, api
 from utils import callback_data as cd
 
 
-@dp.callback_query_handler(cd.show_statistics.filter())
+@dp.callback_query_handler(
+    cd.show_statistics.filter(name=models.StatisticsReportType.DAILY_REVENUE.name),
+    filters.EnabledUnitIdsFilter(),
+)
 async def on_update_daily_revenue_query(
         callback_query: CallbackQuery,
-        callback_data: models.StatisticsReportTypeCallbackData,
+        enabled_unit_ids: list[int],
 ):
-    report_type = callback_data['name']
     units = await db.get_units()
     unit_id_to_name = {unit.id: unit.name for unit in units}
-    daily_revenue_strategy = statistics_reports.report_type_to_strategy[report_type]
-    strategy = daily_revenue_strategy(report_type, callback_query.message.chat.id, unit_id_to_name)
-    response = await strategy.get_statistics_report()
+    revenue_statistics = await api.get_revenue_statistics(enabled_unit_ids)
+    response = responses.RevenueStatistics(revenue_statistics, unit_id_to_name)
     await callback_query.message.edit_text(**response.as_dict())
 
 
-@dp.message_handler(Command([report_type.name for report_type in models.StatisticsReportType]))
-async def on_statistics_report_command(message: Message, command: Command.CommandObj):
-    report_type = command.command.upper()
+@dp.message_handler(
+    Command(models.StatisticsReportType.DAILY_REVENUE.name),
+    filters.EnabledUnitIdsFilter(),
+)
+async def on_statistics_report_command(message: Message, enabled_unit_ids: list[int]):
     skeleton_message = await message.answer('<i>Загрузка...</i>')
     units = await db.get_units()
     unit_id_to_name = {unit.id: unit.name for unit in units}
-    daily_revenue_strategy = statistics_reports.report_type_to_strategy[report_type]
-    strategy = daily_revenue_strategy(report_type, message.chat.id, unit_id_to_name)
-    response = await strategy.get_statistics_report()
+    revenue_statistics = await api.get_revenue_statistics(enabled_unit_ids)
+    response = responses.RevenueStatistics(revenue_statistics, unit_id_to_name)
     await skeleton_message.edit_text(**response.as_dict())
