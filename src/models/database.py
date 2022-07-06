@@ -1,10 +1,8 @@
 import uuid
-from dataclasses import dataclass
 from enum import Enum
 
 __all__ = (
     'ReportType',
-    'Region',
     'Unit',
     'StatisticsReportType',
 )
@@ -35,13 +33,9 @@ class StatisticsReportType(Enum):
     BONUS_SYSTEM = 'Бонусная система'
 
 
-@dataclass(frozen=True, slots=True)
-class Region:
-    id: int
-    name: str
-
-
 class Unit(BaseModel):
     id: int
     name: str
     uuid: uuid.UUID
+    account_name: str
+    region: str
