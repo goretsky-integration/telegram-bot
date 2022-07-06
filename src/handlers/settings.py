@@ -15,15 +15,15 @@ async def on_switch_unit_statis_button(
     is_unit_enabled = bool(int(callback_data['is_unit_enabled']))
     unit_id = int(callback_data['unit_id'])
     report_type = callback_data['report_type']
-    region_id = int(callback_data['region_id'])
+    region = callback_data['region']
 
     if is_unit_enabled:
         await db.delete_unit_by_report_type_and_chat_id(report_type, callback_query.message.chat.id, unit_id)
     else:
         await db.insert_unit_by_report_type_and_chat_id(report_type, callback_query.message.chat.id, unit_id)
-    all_units = await db.get_units_by_region_id(region_id)
+    all_units = await db.get_units_by_region(region)
     enabled_unit_ids = await db.get_unit_ids_by_report_type_and_chat_id(report_type, callback_query.message.chat.id)
-    response = responses.UnitsResponse(report_type, region_id, enabled_unit_ids, all_units)
+    response = responses.UnitsResponse(report_type, region, enabled_unit_ids, all_units)
     await callback_query.message.edit_text(**response.as_dict())
 
 
@@ -33,10 +33,10 @@ async def on_region_units_button(
         callback_data: models.UnitsByRegionCallbackData,
 ):
     report_type = callback_data['report_type']
-    region_id = int(callback_data['region_id'])
-    all_units = await db.get_units_by_region_id(region_id)
+    region = callback_data['region']
+    all_units = await db.get_units_by_region(region)
     enabled_unit_ids = await db.get_unit_ids_by_report_type_and_chat_id(report_type, callback_query.message.chat.id)
-    response = responses.UnitsResponse(report_type, region_id, enabled_unit_ids, all_units)
+    response = responses.UnitsResponse(report_type, region, enabled_unit_ids, all_units)
     await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 

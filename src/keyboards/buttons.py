@@ -55,11 +55,11 @@ class ReportSettingsButton(InlineKeyboardButton):
 
 class ChooseRegionButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region_id: int, region_name: str):
+    def __init__(self, report_type: str, region: str):
         super().__init__(
-            text=region_name,
+            text=region,
             callback_data=callback_data.units_by_region.new(
-                region_id=region_id,
+                region=region,
                 report_type=report_type,
             ),
         )
@@ -67,13 +67,13 @@ class ChooseRegionButton(InlineKeyboardButton):
 
 class SwitchUnitStatusButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region_id: int, unit_id: int, unit_name: str, is_unit_enabled: bool):
+    def __init__(self, report_type: str, region: str, unit_id: int, unit_name: str, is_unit_enabled: bool):
         super().__init__(
             text=f'{"🟢" if is_unit_enabled else "🔴"} {unit_name}',
             callback_data=callback_data.switch_unit_status.new(
                 report_type=report_type,
                 unit_id=unit_id,
-                region_id=region_id,
+                region=region,
                 is_unit_enabled=int(is_unit_enabled),
             )
         )

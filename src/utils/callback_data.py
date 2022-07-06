@@ -10,5 +10,5 @@ __all__ = (
 
 show_statistics = CallbackData('show_statistics', 'name')
 report_settings = CallbackData('report_settings', 'name')
-units_by_region = CallbackData('units_by_region', 'region_id', 'report_type')
-switch_unit_status = CallbackData('switch_unit_status', 'unit_id', 'report_type', 'is_unit_enabled', 'region_id')
+units_by_region = CallbackData('units_by_region', 'region', 'report_type')
+switch_unit_status = CallbackData('switch_unit_status', 'unit_id', 'report_type', 'is_unit_enabled', 'region')

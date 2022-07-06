@@ -52,16 +52,15 @@ class SettingsMarkup(InlineKeyboardMarkup):
 
 class RegionsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self, report_type: str, regions: Iterable[models.Region]):
+    def __init__(self, report_type: str, regions: str):
         super().__init__()
-        self.add(*(buttons.ChooseRegionButton(report_type, region.id, region.name)
-                   for region in regions))
+        self.add(*(buttons.ChooseRegionButton(report_type, region) for region in regions))
 
 
 class UnitsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self, report_type: str, region_id: int, enabled_unit_ids: Iterable[int], all_units: Iterable[models.Unit]):
+    def __init__(self, report_type: str, region: str, enabled_unit_ids: Iterable[int], all_units: Iterable[models.Unit]):
         super().__init__(row_width=2)
         for unit in all_units:
             is_unit_enabled = unit.id in enabled_unit_ids
-            self.insert(buttons.SwitchUnitStatusButton(report_type, region_id, unit.id, unit.name, is_unit_enabled))
+            self.insert(buttons.SwitchUnitStatusButton(report_type, region, unit.id, unit.name, is_unit_enabled))
