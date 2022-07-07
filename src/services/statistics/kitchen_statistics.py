@@ -1,3 +1,4 @@
+import asyncio
 from typing import Iterable
 
 import db
@@ -12,17 +13,19 @@ __all__ = (
 
 async def get_kitchen_statistics(units: Iterable[models.Unit]) -> models.KitchenStatisticsBatch:
     account_name_to_units = utils.helpers.group_units_by_account_name(units)
-
-    all_units_kitchen_statistics = []
-    kitchen_statistics_error_unit_ids = []
-
+    tasks = []
     for account_name, units in account_name_to_units.items():
         unit_ids = [unit.id for unit in units]
         cookies = await db.get_cookies(account_name)
-        kitchen_statistics = await api.get_kitchen_statistics(unit_ids, cookies)
+        tasks.append(api.get_kitchen_statistics(unit_ids, cookies))
 
-        all_units_kitchen_statistics += kitchen_statistics.kitchen_statistics
-        kitchen_statistics_error_unit_ids += kitchen_statistics.error_unit_ids
+    units_kitchen_statistics = await asyncio.gather(*tasks)
+    all_units_kitchen_statistics = []
+    kitchen_statistics_error_unit_ids = []
+
+    for unit_kitchen_statistics in units_kitchen_statistics:
+        all_units_kitchen_statistics += unit_kitchen_statistics.kitchen_statistics
+        kitchen_statistics_error_unit_ids += unit_kitchen_statistics.error_unit_ids
 
     return models.KitchenStatisticsBatch(
         kitchen_statistics=all_units_kitchen_statistics,
