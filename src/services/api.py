@@ -1,6 +1,8 @@
+import uuid
 from typing import Iterable, Sequence
 
 import httpx
+from pydantic import parse_obj_as
 
 import models
 from config import app_settings
@@ -39,3 +41,22 @@ async def get_kitchen_statistics(
         raise exceptions.DodoAPIError
 
     return models.KitchenStatisticsBatch.parse_obj(response.json())
+
+
+async def get_delivery_statistics(
+        access_token: str,
+        unit_uuids: Iterable[str | uuid.UUID],
+) -> list[models.UnitDeliveryStatistics]:
+    url = f'{app_settings.api_url}/v1/statistics/delivery'
+    params = {'token': access_token, 'unit_uuids': tuple(unit_uuids)}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, params=params, timeout=30)
+        except httpx.HTTPError:
+            raise exceptions.DodoAPIError
+
+    if not response.is_success:
+        raise exceptions.DodoAPIError
+
+    return parse_obj_as(list[models.UnitDeliveryStatistics], response.json())

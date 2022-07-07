@@ -61,3 +61,28 @@ async def on_update_kitchen_performance_query(callback_query: CallbackQuery, ena
     kitchen_statistics = await statistics.get_kitchen_statistics(units)
     response = responses.KitchenStatistics(kitchen_statistics, unit_id_to_name)
     await callback_query.message.edit_text(**response.as_dict())
+
+
+@dp.message_handler(
+    Command(models.StatisticsReportType.DELIVERY_SPEED.name),
+    filters.EnabledUnitIdsFilter(),
+)
+async def on_delivery_speed_command(message: Message, enabled_unit_ids: list[int]):
+    units = await db.get_units()
+    enabled_units = [unit for unit in units if unit.id in enabled_unit_ids]
+    units_delivery_statistics = await statistics.get_delivery_statistics(enabled_units)
+    response = responses.DeliverySpeedStatistics(units_delivery_statistics)
+    await message.answer(**response.as_dict())
+
+
+@dp.callback_query_handler(
+    cd.show_statistics.filter(name=models.StatisticsReportType.DELIVERY_SPEED.name),
+    filters.EnabledUnitIdsFilter(),
+)
+async def on_delivery_speed_query(callback_query: CallbackQuery, enabled_unit_ids: list[int]):
+    units = await db.get_units()
+    enabled_units = [unit for unit in units if unit.id in enabled_unit_ids]
+    units_delivery_statistics = await statistics.get_delivery_statistics(enabled_units)
+    response = responses.DeliverySpeedStatistics(units_delivery_statistics)
+    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.answer()

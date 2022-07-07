@@ -1,7 +1,9 @@
+from typing import Iterable
+
 import keyboards
 import models.database
 from responses.base import Response, ReplyMarkup
-from services.text_utils import humanize_percents, intgaps
+from services.text_utils import humanize_percents, intgaps, humanize_seconds, abbreviate_unit_name
 
 
 class RevenueStatistics(Response):
@@ -57,3 +59,29 @@ class KitchenStatistics(Response):
 
     def get_reply_markup(self) -> ReplyMarkup:
         return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.KITCHEN_PERFORMANCE.name)
+
+
+class DeliverySpeedStatistics(Response):
+
+    def __init__(self, units_delivery_statistics: Iterable[models.UnitDeliveryStatistics]):
+        self._units_delivery_statistics = units_delivery_statistics
+
+    def get_text(self) -> str:
+        units_delivery_statistics = sorted(self._units_delivery_statistics,
+                                           key=lambda unit: unit.average_delivery_order_fulfillment_time)
+
+        lines = ['<b>Общая скорость доставки - Время приготовления - Время на полке - Поездка курьера</b>']
+
+        for unit_delivery_statistics in units_delivery_statistics:
+            order_fulfillment_time = humanize_seconds(unit_delivery_statistics.average_delivery_order_fulfillment_time)
+            cooking_time = humanize_seconds(unit_delivery_statistics.average_cooking_time)
+            heated_shelf_time = humanize_seconds(unit_delivery_statistics.average_heated_shelf_time)
+            order_trip_time = humanize_seconds(unit_delivery_statistics.average_order_trip_time)
+            unit_name = abbreviate_unit_name(unit_delivery_statistics.unit_name)
+
+            lines.append(f'{unit_name} | {order_fulfillment_time}'
+                         f' | {cooking_time} | {heated_shelf_time} | {order_trip_time}')
+        return '\n'.join(lines)
+
+    def get_reply_markup(self) -> ReplyMarkup:
+        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.DELIVERY_SPEED.name)
