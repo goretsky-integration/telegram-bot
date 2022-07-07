@@ -4,7 +4,7 @@ __all__ = (
     'humanize_percents',
     'humanize_seconds',
     'intgaps',
-    'abbreviate_department_name',
+    'abbreviate_unit_name',
 )
 
 
@@ -76,15 +76,15 @@ def humanize_seconds(seconds: int) -> str:
     return f'{hours:02}:{duration.minutes:02}:{duration.remaining_seconds:02}'
 
 
-def abbreviate_department_name(department_name: str) -> str:
+def abbreviate_unit_name(department_name: str) -> str:
     """Contract department name via abbreviations.
 
     Examples:
-        >>> abbreviate_department_name('Москва 4-1')
+        >>> abbreviate_unit_name('Москва 4-1')
         '4-1'
-        >>> abbreviate_department_name('Вязьма-2')
+        >>> abbreviate_unit_name('Вязьма-2')
         'ВЗМ-2'
-        >>> abbreviate_department_name('Калуга-4')
+        >>> abbreviate_unit_name('Калуга-4')
         'КЛ-4'
 
     Args:
