@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from pymongo.results import UpdateResult
 
 from db.engine import database
@@ -10,20 +12,20 @@ __all__ = (
 
 
 async def insert_unit_by_report_type_and_chat_id(
-        report_type: str, chat_id: int, unit_id: int
+        report_type: str, chat_id: int, unit_ids: Iterable[int],
 ) -> str | None:
     report: UpdateResult = await database.reports.update_one(
         {'$and': [{'report_type': report_type}, {'chat_id': chat_id}]},
-        {'$push': {'unit_ids': unit_id}},
+        {'$addToSet': {'unit_ids': {'$each': tuple(unit_ids)}}},
         upsert=True,
     )
     return report.upserted_id
 
 
-async def delete_unit_by_report_type_and_chat_id(report_type: str, chat_id: int, unit_id: int):
+async def delete_unit_by_report_type_and_chat_id(report_type: str, chat_id: int, unit_ids: Iterable[int]):
     await database.reports.update_one(
         {'$and': [{'report_type': report_type}, {'chat_id': chat_id}]},
-        {'$pull': {'unit_ids': unit_id}},
+        {'$pull': {'unit_ids': {'$in': tuple(unit_ids)}}},
     )
 
 

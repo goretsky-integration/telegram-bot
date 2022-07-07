@@ -1,10 +1,11 @@
-from typing import TypedDict
+from typing import TypedDict, Literal
 
 __all__ = (
     'ReportTypeCallbackData',
     'StatisticsReportTypeCallbackData',
     'UnitsByRegionCallbackData',
     'SwitchUnitStatusCallbackData',
+    'AllUnitIdsByRegionCallbackData',
 )
 
 
@@ -26,3 +27,9 @@ class SwitchUnitStatusCallbackData(TypedDict):
     is_unit_enabled: str
     unit_id: str
     region: str
+
+
+class AllUnitIdsByRegionCallbackData(TypedDict):
+    region: str
+    report_type: str
+    action: Literal['disable', 'enable']

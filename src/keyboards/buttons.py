@@ -11,6 +11,8 @@ __all__ = (
     'ChooseRegionButton',
     'ReportSettingsButton',
     'SwitchUnitStatusButton',
+    'DisableAllUnitsByRegionButton',
+    'EnableAllUnitsByRegionButton',
 )
 
 
@@ -76,4 +78,30 @@ class SwitchUnitStatusButton(InlineKeyboardButton):
                 region=region,
                 is_unit_enabled=int(is_unit_enabled),
             )
+        )
+
+
+class EnableAllUnitsByRegionButton(InlineKeyboardButton):
+
+    def __init__(self, report_type: str, region: str):
+        super().__init__(
+            text='Включить все',
+            callback_data=callback_data.switch_all_unit_statuses.new(
+                report_type=report_type,
+                region=region,
+                action='enable'
+            ),
+        )
+
+
+class DisableAllUnitsByRegionButton(InlineKeyboardButton):
+
+    def __init__(self, report_type: str, region: str):
+        super().__init__(
+            text='Отключить все',
+            callback_data=callback_data.switch_all_unit_statuses.new(
+                report_type=report_type,
+                region=region,
+                action='disable',
+            ),
         )
