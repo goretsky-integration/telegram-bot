@@ -85,3 +85,31 @@ class DeliverySpeedStatistics(Response):
 
     def get_reply_markup(self) -> ReplyMarkup:
         return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.DELIVERY_SPEED.name)
+
+
+class BeingLateCertificatesStatistics(Response):
+
+    def __init__(self, being_late_certificates: Iterable[models.UnitBeingLateCertificatesTodayAndWeekBefore |
+                                                         models.SingleUnitBeingLateCertificatesTodayAndWeekBefore],
+                 unit_id_to_name: dict[int, str]):
+        self._being_late_certificates = being_late_certificates
+        self._unit_id_to_name = unit_id_to_name
+
+    def get_text(self) -> str:
+        lines = ['<b>Сертификаты за опоздание (сегодня) | (неделю назад)</b>']
+
+        being_late_certificates = sorted(self._being_late_certificates, reverse=True,
+                                         key=lambda i: (i.certificates_today_count, i.certificates_week_before_count))
+
+        for report in being_late_certificates:
+            if isinstance(report, models.SingleUnitBeingLateCertificatesTodayAndWeekBefore):
+                unit_name = self._unit_id_to_name[report.unit_id]
+            else:
+                unit_name = report.unit_name
+            lines.append(f'{unit_name} | {report.certificates_today_count} шт'
+                         f' | {report.certificates_week_before_count} шт')
+
+        return '\n'.join(lines)
+
+    def get_reply_markup(self) -> ReplyMarkup:
+        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.BEING_LATE_CERTIFICATES.name)

@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from typing import Iterable, Sequence
 
@@ -60,3 +61,36 @@ async def get_delivery_statistics(
         raise exceptions.DodoAPIError
 
     return parse_obj_as(list[models.UnitDeliveryStatistics], response.json())
+
+
+async def get_being_late_certificates_statistics(
+        unit_ids: Iterable[int] | Sequence[int], cookies: dict
+) -> models.SingleUnitBeingLateCertificatesTodayAndWeekBefore\
+     | list[models.UnitBeingLateCertificatesTodayAndWeekBefore]:
+    """Get count of given certificates for delivery being late.
+
+    Args:
+        unit_ids: collection of unit ids.
+        cookies: cookies as dict.
+
+    Returns:
+        `models.SingleUnitBeingLateCertificatesTodayAndWeekBefore` if only one unit id is specified in parameters,
+        otherwise returns list of `models.UnitBeingLateCertificatesTodayAndWeekBefore`.
+    """
+    url = f'{app_settings.api_url}/v1/statistics/being-late-certificates/today-and-week-before'
+    body = {'cookies': cookies, 'unit_ids': tuple(unit_ids)}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, json=body, timeout=30)
+        except httpx.HTTPError:
+            raise exceptions.DodoAPIError
+
+    if not response.is_success:
+        raise exceptions.DodoAPIError
+
+    response_json = response.json()
+    if isinstance(response_json, dict):
+        response_json['unit_id'] = tuple(unit_ids)[0]
+        return models.SingleUnitBeingLateCertificatesTodayAndWeekBefore.parse_obj(response_json)
+    return parse_obj_as(list[models.UnitBeingLateCertificatesTodayAndWeekBefore], response_json)

@@ -11,6 +11,8 @@ __all__ = (
     'ProductSpending',
     'KitchenStatisticsBatch',
     'UnitDeliveryStatistics',
+    'UnitBeingLateCertificatesTodayAndWeekBefore',
+    'SingleUnitBeingLateCertificatesTodayAndWeekBefore',
 )
 
 
@@ -79,3 +81,15 @@ class UnitDeliveryStatistics(BaseModel):
     orders_for_courier_count_per_hour: NonNegativeFloat
     delivery_with_courier_app_percent: NonNegativeFloat
     couriers_workload: NonNegativeFloat
+
+
+class UnitBeingLateCertificatesTodayAndWeekBefore(BaseModel):
+    unit_name: str
+    certificates_today_count: NonNegativeInt
+    certificates_week_before_count: NonNegativeInt
+
+
+class SingleUnitBeingLateCertificatesTodayAndWeekBefore(BaseModel):
+    unit_id: int
+    certificates_today_count: NonNegativeInt
+    certificates_week_before_count: NonNegativeInt

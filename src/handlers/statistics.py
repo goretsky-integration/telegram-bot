@@ -86,3 +86,30 @@ async def on_delivery_speed_query(callback_query: CallbackQuery, enabled_unit_id
     response = responses.DeliverySpeedStatistics(units_delivery_statistics)
     await callback_query.message.edit_text(**response.as_dict())
     await callback_query.answer()
+
+
+@dp.message_handler(
+    Command(models.StatisticsReportType.BEING_LATE_CERTIFICATES.name),
+    filters.EnabledUnitIdsFilter(),
+)
+async def on_being_late_certificates_command(message: Message, enabled_unit_ids: list[int]):
+    units = await db.get_units()
+    enabled_units = [unit for unit in units if unit.id in enabled_unit_ids]
+    unit_id_to_name = {unit.id: unit.name for unit in units}
+    units_delivery_statistics = await statistics.get_being_late_certificates_statistics(enabled_units)
+    response = responses.BeingLateCertificatesStatistics(units_delivery_statistics, unit_id_to_name)
+    await message.answer(**response.as_dict())
+
+
+@dp.callback_query_handler(
+    cd.show_statistics.filter(name=models.StatisticsReportType.BEING_LATE_CERTIFICATES.name),
+    filters.EnabledUnitIdsFilter(),
+)
+async def on_being_late_certificates_query(callback_query: CallbackQuery, enabled_unit_ids: list[int]):
+    units = await db.get_units()
+    enabled_units = [unit for unit in units if unit.id in enabled_unit_ids]
+    unit_id_to_name = {unit.id: unit.name for unit in units}
+    units_delivery_statistics = await statistics.get_being_late_certificates_statistics(enabled_units)
+    response = responses.BeingLateCertificatesStatistics(units_delivery_statistics, unit_id_to_name)
+    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.answer()
