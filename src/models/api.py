@@ -1,7 +1,7 @@
 import uuid
 from typing import TypedDict
 
-from pydantic import BaseModel, NonNegativeInt, Field
+from pydantic import BaseModel, NonNegativeInt
 
 __all__ = (
     'RevenueForTodayAndWeekBeforeStatistics',
@@ -22,6 +22,8 @@ __all__ = (
     'KitchenProductionStatistics',
     'UnitKitchenProduction',
     'UnitIdAndName',
+    'UnitHeatedShelfOrdersAndCouriers',
+    'HeatedShelfOrdersAndCouriersStatistics',
 )
 
 
@@ -132,3 +134,15 @@ class UnitBonusSystem(BaseModel):
 class UnitIdAndName(TypedDict):
     id: int
     name: str
+
+
+class UnitHeatedShelfOrdersAndCouriers(BaseModel):
+    unit_id: int
+    awaiting_orders_count: int
+    in_queue_count: int
+    total_count: int
+
+
+class HeatedShelfOrdersAndCouriersStatistics(BaseModel):
+    units: list[UnitHeatedShelfOrdersAndCouriers]
+    error_unit_ids: list[int]
