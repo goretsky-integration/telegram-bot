@@ -133,7 +133,8 @@ class BonusSystemStatistics(Response):
         lines = ['<b>Бонусная система:</b>']
         units_statistics = self.get_sorted_units_statistics()
         for unit in units_statistics:
-            lines.append(f'{unit.unit_name} | {unit.orders_with_phone_numbers_percent}% из 100')
+            orders_with_phone_numbers_percent = round(unit.orders_with_phone_numbers_percent)
+            lines.append(f'{unit.unit_name} | {orders_with_phone_numbers_percent}% из 100')
         return '\n'.join(lines)
 
 
