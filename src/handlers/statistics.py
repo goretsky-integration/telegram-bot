@@ -16,7 +16,7 @@ from utils.convert_models import UnitsConverter, to_heated_shelf_orders_and_cour
 async def on_daily_revenue_statistics_query(callback_query: CallbackQuery, units: UnitsConverter):
     revenue_statistics = await api.get_revenue_statistics(units.ids)
     response = responses.RevenueStatistics(revenue_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
 
 
 @dp.message_handler(
@@ -36,7 +36,7 @@ async def on_daily_revenue_statistics_command(message: Message, units: UnitsConv
 async def on_update_kitchen_performance_query(callback_query: CallbackQuery, units: UnitsConverter):
     kitchen_statistics = await statistics.get_kitchen_performance_statistics(units.account_names_to_unit_ids)
     response = responses.KitchenPerformanceStatistics(kitchen_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
 
 
 @dp.message_handler(
@@ -56,7 +56,7 @@ async def on_kitchen_performance_command(message: Message, units: UnitsConverter
 async def on_delivery_speed_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_delivery_statistics = await statistics.get_delivery_speed_statistics(units.account_names_to_unit_uuids)
     response = responses.DeliverySpeedStatistics(units_delivery_statistics)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -78,7 +78,7 @@ async def on_being_late_certificates_query(callback_query: CallbackQuery, units:
     units_statistics = await statistics.get_being_late_certificates_statistics(
         units.account_names_to_unit_ids_and_names)
     response = responses.BeingLateCertificatesStatistics(units_statistics)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -100,7 +100,7 @@ async def on_being_late_certificates_command(message: Message, units: UnitsConve
 async def on_cooking_time_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_statistics = await statistics.get_kitchen_production_statistics(units.account_names_to_unit_ids)
     response = responses.CookingTimeStatistics(units_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -121,7 +121,7 @@ async def on_cooking_time_command(message: Message, units: UnitsConverter):
 async def on_delivery_performance_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_statistics = await statistics.get_delivery_performance_statistics(units.account_names_to_unit_ids)
     response = responses.DeliveryPerformanceStatistics(units_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -142,7 +142,7 @@ async def on_delivery_performance_command(message: Message, units: UnitsConverte
 async def on_delivery_awaiting_time_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_statistics = await statistics.get_heated_shelf_statistics(units.account_names_to_unit_ids)
     response = responses.HeatedShelfTimeStatistics(units_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -163,7 +163,7 @@ async def on_delivery_awaiting_time_command(message: Message, units: UnitsConver
 async def on_bonus_system_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_statistics = await statistics.get_bonus_system_statistics(units.account_names_to_unit_ids_and_names)
     response = responses.BonusSystemStatistics(units_statistics)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
@@ -188,7 +188,7 @@ async def on_awaiting_orders_query(callback_query: CallbackQuery, units: UnitsCo
         heated_shelf_statistics, couriers_statistics)
     response = responses.HeatedShelfOrdersAndCouriersStatistics(
         heated_shelf_orders_and_couriers_statistics, units.id_to_name)
-    await callback_query.message.edit_text(**response.as_dict())
+    await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
