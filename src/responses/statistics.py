@@ -200,3 +200,19 @@ class HeatedShelfOrdersAndCouriersStatistics(Response):
                          f' - {unit.in_queue_count}'
                          f' ({unit.total_count})')
         return '\n'.join(lines)
+
+
+class RestaurantCookingTime(Response):
+
+    def __init__(self, units_orders_handover_time: Iterable[models.UnitOrdersHandoverTime]):
+        self._units_statistics = units_orders_handover_time
+
+    def get_sorted_units_statistics(self) -> list[models.UnitOrdersHandoverTime]:
+        return sorted(self._units_statistics, key=lambda unit: unit.total_handover_time)
+
+    def get_text(self) -> str:
+        lines = ['<b>Время приготовления:</b>']
+        for unit in self.get_sorted_units_statistics():
+            total_handover_time = humanize_seconds(unit.total_handover_time)
+            lines.append(f'{unit.unit_name} | {total_handover_time}')
+        return '\n'.join(lines)

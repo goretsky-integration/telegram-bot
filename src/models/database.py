@@ -23,6 +23,7 @@ class ReportType(Enum):
 
 class StatisticsReportType(Enum):
     COOKING_TIME = 'Время приготовления'
+    RESTAURANT_COOKING_TIME = 'Время приготовления (ресторан)'
     KITCHEN_PERFORMANCE = 'Производительность кухни'
     DELIVERY_AWAITING_TIME = 'Время на полке'
     DELIVERY_SPEED = 'Скорость доставки'

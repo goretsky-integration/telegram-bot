@@ -206,6 +206,27 @@ async def on_awaiting_orders_command(message: Message, units: UnitsConverter):
     await message.answer(**response.as_dict())
 
 
+@dp.callback_query_handler(
+    cd.show_statistics.filter(name=models.StatisticsReportType.RESTAURANT_COOKING_TIME.name),
+    filters.UnitIdsRequiredFilter(),
+)
+async def on_restaurant_cooking_time_command(callback_query: CallbackQuery, units: UnitsConverter):
+    units_orders_handover_time = await statistics.get_orders_handover_time_statistics(units.account_names_to_unit_uuids)
+    response = responses.RestaurantCookingTime(units_orders_handover_time)
+    await callback_query.message.answer(**response.as_dict())
+    await callback_query.answer()
+
+
+@dp.message_handler(
+    Command(models.StatisticsReportType.RESTAURANT_COOKING_TIME.name),
+    filters.UnitIdsRequiredFilter(),
+)
+async def on_restaurant_cooking_time_command(message: Message, units: UnitsConverter):
+    units_orders_handover_time = await statistics.get_orders_handover_time_statistics(units.account_names_to_unit_uuids)
+    response = responses.RestaurantCookingTime(units_orders_handover_time)
+    await message.answer(**response.as_dict())
+
+
 @dp.callback_query_handler(cd.show_statistics.filter())
 async def on_no_enabled_units_query(callback_query: CallbackQuery):
     await callback_query.message.answer(

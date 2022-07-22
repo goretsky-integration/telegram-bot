@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from typing import TypedDict
 
 from pydantic import BaseModel, NonNegativeInt
@@ -24,6 +25,8 @@ __all__ = (
     'UnitIdAndName',
     'UnitHeatedShelfOrdersAndCouriers',
     'HeatedShelfOrdersAndCouriersStatistics',
+    'UnitOrdersHandoverTime',
+    'SalesChannel',
 )
 
 
@@ -146,3 +149,22 @@ class UnitHeatedShelfOrdersAndCouriers(BaseModel):
 class HeatedShelfOrdersAndCouriersStatistics(BaseModel):
     units: list[UnitHeatedShelfOrdersAndCouriers]
     error_unit_ids: list[int]
+
+
+class SalesChannel(Enum):
+    DINE_IN = 'Dine-in'
+    TAKEAWAY = 'Takeaway'
+    DELIVERY = 'Delivery'
+
+
+class UnitOrdersHandoverTime(BaseModel):
+    unit_uuid: uuid.UUID
+    unit_name: str
+    average_tracking_pending_time: int
+    average_cooking_time: int
+    average_heated_shelf_time: int
+    sales_channels: list[SalesChannel]
+
+    @property
+    def total_handover_time(self) -> int:
+        return sum((self.average_heated_shelf_time, self.average_cooking_time, self.average_tracking_pending_time))

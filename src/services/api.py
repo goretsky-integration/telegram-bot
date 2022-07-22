@@ -18,7 +18,7 @@ async def request_to_api(
         params: dict | None = None,
         body: dict | None = None,
 ) -> list | dict:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(base_url=app_settings.api_url) as client:
         try:
             response = await client.request(method=method, url=url, params=params, json=body, timeout=30)
             return response.json()
@@ -42,27 +42,27 @@ class RequestByCookiesAndUnitIds(Generic[RM]):
 
 
 get_kitchen_performance_statistics = RequestByCookiesAndUnitIds(
-    url=f'{app_settings.api_url}/v1/statistics/kitchen/performance',
+    url='/v1/statistics/kitchen/performance',
     response_model=models.KitchenPerformanceStatistics,
 )
 
 get_kitchen_production_statistics = RequestByCookiesAndUnitIds(
-    url=f'{app_settings.api_url}/v1/statistics/production/kitchen',
+    url='/v1/statistics/production/kitchen',
     response_model=models.KitchenProductionStatistics,
 )
 
 get_delivery_performance_statistics = RequestByCookiesAndUnitIds(
-    url=f'{app_settings.api_url}/v1/statistics/delivery/performance',
+    url='/v1/statistics/delivery/performance',
     response_model=models.DeliveryPerformanceStatistics,
 )
 
 get_heated_shelf_statistics = RequestByCookiesAndUnitIds(
-    url=f'{app_settings.api_url}/v1/statistics/delivery/heated-shelf',
+    url='/v1/statistics/delivery/heated-shelf',
     response_model=models.HeatedShelfStatistics,
 )
 
 get_couriers_statistics = RequestByCookiesAndUnitIds(
-    url=f'{app_settings.api_url}/v1/statistics/delivery/couriers',
+    url='/v1/statistics/delivery/couriers',
     response_model=models.CouriersStatistics,
 )
 
@@ -70,7 +70,7 @@ get_couriers_statistics = RequestByCookiesAndUnitIds(
 async def get_revenue_statistics(
         unit_ids: Iterable[int] | Sequence[int],
 ) -> models.RevenueStatistics:
-    url = f'{app_settings.api_url}/v1/statistics/revenue'
+    url = '/v1/statistics/revenue'
     params = {'unit_ids': tuple(unit_ids)}
     response_json = await request_to_api(url, method='GET', params=params)
     return models.RevenueStatistics.parse_obj(response_json)
@@ -80,7 +80,7 @@ async def get_being_late_certificates_statistics(
         cookies: dict,
         unit_ids_and_names: Iterable[models.UnitIdAndName],
 ) -> list[models.UnitBeingLateCertificatesTodayAndWeekBefore]:
-    url = f'{app_settings.api_url}/v1/statistics/being-late-certificates'
+    url = '/v1/statistics/being-late-certificates'
     body = {'cookies': cookies, 'units': tuple(unit_ids_and_names)}
     response_json = await request_to_api(url, method='POST', body=body)
     return parse_obj_as(list[models.UnitBeingLateCertificatesTodayAndWeekBefore], response_json)
@@ -90,7 +90,7 @@ async def get_bonus_system_statistics(
         cookies: dict,
         unit_ids_and_names: Iterable[models.UnitIdAndName],
 ) -> list[models.UnitBonusSystem]:
-    url = f'{app_settings.api_url}/v1/statistics/bonus-system'
+    url = '/v1/statistics/bonus-system'
     body = {'cookies': cookies, 'units': tuple(unit_ids_and_names)}
     response_json = await request_to_api(url, method='POST', body=body)
     return parse_obj_as(list[models.UnitBonusSystem], response_json)
@@ -100,7 +100,18 @@ async def get_delivery_speed_statistics(
         token: str,
         unit_uuids: Iterable[uuid.UUID],
 ) -> list[models.UnitDeliverySpeed]:
-    url = f'{app_settings.api_url}/v2/statistics/delivery/speed'
+    url = '/v2/statistics/delivery/speed'
     params = {'token': token, 'unit_uuids': [unit_uuid.hex for unit_uuid in unit_uuids]}
     response_json = await request_to_api(url, method='GET', params=params)
     return parse_obj_as(list[models.UnitDeliverySpeed], response_json)
+
+
+async def get_orders_handover_time_statistics(
+        token: str,
+        unit_uuids: Iterable[uuid.UUID],
+) -> list[models.UnitOrdersHandoverTime]:
+    url = '/v2/statistics/production/handover-time'
+    params = {'token': token, 'unit_uuids': [unit_uuid.hex for unit_uuid in unit_uuids],
+              'sales_channels': [models.SalesChannel.DINE_IN.value]}
+    response_json = await request_to_api(url, method='GET', params=params)
+    return parse_obj_as(list[models.UnitOrdersHandoverTime], response_json)

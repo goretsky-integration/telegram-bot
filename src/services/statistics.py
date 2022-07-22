@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from typing import Iterable, Callable, Awaitable, TypeVar
+from typing import Iterable, Callable, Awaitable, TypeVar, Generic, Type
 
 import db
 import models
@@ -86,16 +86,35 @@ class StatisticsByCookiesAndUnitIdsAndNames:
         return self._request_and_flatten_response_unit_models(account_names_to_unit_ids_and_names)
 
 
-async def get_delivery_speed_statistics(
-        account_name_to_unit_uuids: dict[str, Iterable[uuid.UUID]],
-) -> list[models.UnitDeliverySpeed]:
-    tasks = []
-    for account_name, unit_uuids in account_name_to_unit_uuids.items():
-        token = await db.get_access_token(account_name)
-        tasks.append(api.get_delivery_speed_statistics(token, unit_uuids))
-    nested_responses: tuple[list[models.UnitDeliverySpeed], ...] = await asyncio.gather(*tasks)
-    return [response for responses in nested_responses for response in responses]
+class StatisticsByTokenAndUnitUUIDs(Generic[UM]):
 
+    def __init__(self, method: Callable[..., Awaitable], unit_model: Type[UM]):
+        self._method = method
+        self._unit_model = unit_model
+
+    async def request(self, account_name: str, unit_uuids: Iterable[uuid.UUID]) -> list[UM]:
+        token = await db.get_access_token(account_name)
+        return await self._method(token, unit_uuids)
+
+    async def request_all(self, account_name_to_unit_uuids: dict[str, Iterable[uuid.UUID]]):
+        tasks = (self.request(account_name, unit_uuids)
+                 for account_name, unit_uuids in account_name_to_unit_uuids.items())
+        nested_responses = await asyncio.gather(*tasks)
+        return [response for responses in nested_responses for response in responses]
+
+    def __call__(self, account_name_to_unit_uuids: dict[str, Iterable[uuid.UUID]]):
+        return self.request_all(account_name_to_unit_uuids)
+
+
+get_delivery_speed_statistics: StatisticsByTokenAndUnitUUIDs[models.UnitDeliverySpeed] = StatisticsByTokenAndUnitUUIDs(
+    method=api.get_delivery_speed_statistics,
+    unit_model=models.UnitDeliverySpeed,
+)
+
+get_orders_handover_time_statistics: StatisticsByTokenAndUnitUUIDs[models.UnitOrdersHandoverTime] = StatisticsByTokenAndUnitUUIDs(
+    method=api.get_orders_handover_time_statistics,
+    unit_model=models.UnitOrdersHandoverTime,
+)
 
 get_being_late_certificates_statistics = StatisticsByCookiesAndUnitIdsAndNames(
     method=api.get_being_late_certificates_statistics,
