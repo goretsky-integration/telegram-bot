@@ -99,7 +99,7 @@ async def on_being_late_certificates_command(message: Message, units: UnitsConve
 )
 async def on_cooking_time_query(callback_query: CallbackQuery, units: UnitsConverter):
     units_statistics = await statistics.get_kitchen_production_statistics(units.account_names_to_unit_ids)
-    response = responses.CookingTimeStatistics(units_statistics, units.id_to_name)
+    response = responses.TotalCookingTimeStatistics(units_statistics, units.id_to_name)
     await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
@@ -110,7 +110,7 @@ async def on_cooking_time_query(callback_query: CallbackQuery, units: UnitsConve
 )
 async def on_cooking_time_command(message: Message, units: UnitsConverter):
     units_statistics = await statistics.get_kitchen_production_statistics(units.account_names_to_unit_ids)
-    response = responses.CookingTimeStatistics(units_statistics, units.id_to_name)
+    response = responses.TotalCookingTimeStatistics(units_statistics, units.id_to_name)
     await message.answer(**response.as_dict())
 
 

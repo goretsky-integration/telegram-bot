@@ -102,7 +102,7 @@ class BeingLateCertificatesStatistics(Response):
         return '\n'.join(lines)
 
 
-class CookingTimeStatistics(Response):
+class TotalCookingTimeStatistics(Response):
 
     def __init__(self, units_kitchen_statistics: models.KitchenProductionStatistics, unit_id_to_name: dict[int, str]):
         self.__units_statistics = units_kitchen_statistics.units
@@ -113,7 +113,7 @@ class CookingTimeStatistics(Response):
         return sorted(self.__units_statistics, key=lambda unit: unit.average_cooking_time)
 
     def get_text(self) -> str:
-        lines = ['<b>Время приготовления:</b>']
+        lines = ['<b>Общее время приготовления:</b>']
         for unit in self.get_sorted_units_statistics():
             unit_name = self.__unit_id_to_name[unit.unit_id]
             average_cooking_time = humanize_seconds(unit.average_cooking_time)
@@ -212,7 +212,7 @@ class RestaurantCookingTime(Response):
                       key=lambda unit: unit.average_tracking_pending_time + unit.average_cooking_time)
 
     def get_text(self) -> str:
-        lines = ['<b>Время приготовления:</b>']
+        lines = ['<b>Время приготовления в ресторане:</b>']
         for unit in self.get_sorted_units_statistics():
             total_handover_time = humanize_seconds(unit.average_tracking_pending_time + unit.average_cooking_time)
             lines.append(f'{unit.unit_name} | {total_handover_time}')
