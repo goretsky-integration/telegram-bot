@@ -1,7 +1,7 @@
 from aiogram import executor
 
 import handlers
-from bot import dp, on_shutdown
+from bot import dp, on_shutdown, on_startup
 
 
 def main():
@@ -9,6 +9,7 @@ def main():
         dispatcher=dp,
         skip_updates=True,
         on_shutdown=on_shutdown,
+        on_startup=on_startup,
     )
 
 
