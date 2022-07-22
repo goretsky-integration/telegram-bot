@@ -1,8 +1,7 @@
 from typing import Iterable
 
-import keyboards
 import models
-from responses.base import Response, ReplyMarkup
+from responses.base import Response
 from services.text_utils import humanize_percents, intgaps, humanize_seconds, abbreviate_unit_name
 
 
@@ -34,9 +33,6 @@ class RevenueStatistics(Response):
 
         return '\n'.join(lines)
 
-    def get_reply_markup(self) -> ReplyMarkup | None:
-        return keyboards.UpdateStatisticsReportMarkup(models.database.StatisticsReportType.DAILY_REVENUE.name)
-
 
 class KitchenPerformanceStatistics(Response):
 
@@ -62,9 +58,6 @@ class KitchenPerformanceStatistics(Response):
 
         return '\n'.join(lines)
 
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.KITCHEN_PERFORMANCE.name)
-
 
 class DeliverySpeedStatistics(Response):
 
@@ -89,9 +82,6 @@ class DeliverySpeedStatistics(Response):
                          f' | {order_trip_time}')
         return '\n'.join(lines)
 
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.DELIVERY_SPEED.name)
-
 
 class BeingLateCertificatesStatistics(Response):
 
@@ -110,9 +100,6 @@ class BeingLateCertificatesStatistics(Response):
                          f' | {report.certificates_week_before_count} шт')
 
         return '\n'.join(lines)
-
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.BEING_LATE_CERTIFICATES.name)
 
 
 class CookingTimeStatistics(Response):
@@ -133,9 +120,6 @@ class CookingTimeStatistics(Response):
             lines.append(f'{unit_name} | {average_cooking_time}')
         return '\n'.join(lines)
 
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.COOKING_TIME.name)
-
 
 class BonusSystemStatistics(Response):
 
@@ -151,9 +135,6 @@ class BonusSystemStatistics(Response):
         for unit in units_statistics:
             lines.append(f'{unit.unit_name} | {unit.orders_with_phone_numbers_percent}% из 100')
         return '\n'.join(lines)
-
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.BONUS_SYSTEM.name)
 
 
 class DeliveryPerformanceStatistics(Response):
@@ -177,9 +158,6 @@ class DeliveryPerformanceStatistics(Response):
             lines.append(f'{unit_name} | {orders_count_today} | {delta_from_week_before}')
         return '\n'.join(lines)
 
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.BONUS_SYSTEM.name)
-
 
 class HeatedShelfTimeStatistics(Response):
 
@@ -198,9 +176,6 @@ class HeatedShelfTimeStatistics(Response):
             average_awaiting_time = humanize_seconds(unit.average_awaiting_time)
             lines.append(f'{unit_name} | {average_awaiting_time}')
         return '\n'.join(lines)
-
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.DELIVERY_AWAITING_TIME.name)
 
 
 class HeatedShelfOrdersAndCouriersStatistics(Response):
@@ -224,6 +199,3 @@ class HeatedShelfOrdersAndCouriersStatistics(Response):
                          f' - {unit.in_queue_count}'
                          f' ({unit.total_count})')
         return '\n'.join(lines)
-
-    def get_reply_markup(self) -> ReplyMarkup:
-        return keyboards.UpdateStatisticsReportMarkup(models.StatisticsReportType.AWAITING_ORDERS.name)
