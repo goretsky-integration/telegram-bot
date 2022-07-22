@@ -208,11 +208,12 @@ class RestaurantCookingTime(Response):
         self._units_statistics = units_orders_handover_time
 
     def get_sorted_units_statistics(self) -> list[models.UnitOrdersHandoverTime]:
-        return sorted(self._units_statistics, key=lambda unit: unit.total_handover_time)
+        return sorted(self._units_statistics,
+                      key=lambda unit: unit.average_tracking_pending_time + unit.average_cooking_time)
 
     def get_text(self) -> str:
         lines = ['<b>Время приготовления:</b>']
         for unit in self.get_sorted_units_statistics():
-            total_handover_time = humanize_seconds(unit.total_handover_time)
+            total_handover_time = humanize_seconds(unit.average_tracking_pending_time + unit.average_cooking_time)
             lines.append(f'{unit.unit_name} | {total_handover_time}')
         return '\n'.join(lines)

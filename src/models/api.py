@@ -164,7 +164,3 @@ class UnitOrdersHandoverTime(BaseModel):
     average_cooking_time: int
     average_heated_shelf_time: int
     sales_channels: list[SalesChannel]
-
-    @property
-    def total_handover_time(self) -> int:
-        return sum((self.average_heated_shelf_time, self.average_cooking_time, self.average_tracking_pending_time))
