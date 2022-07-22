@@ -1,4 +1,4 @@
-from aiogram.dispatcher.filters import Text, Command
+from aiogram.dispatcher.filters import Text, Command, CommandStart
 from aiogram.types import Message
 
 import responses
@@ -17,6 +17,6 @@ async def on_statistics_reports_button(message: Message):
     await message.answer(**responses.StatisticsReportsMenu().as_dict())
 
 
-@dp.message_handler()
+@dp.message_handler(CommandStart())
 async def on_start(message: Message):
     await message.answer(**responses.MainMenu().as_dict())
