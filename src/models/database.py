@@ -12,11 +12,11 @@ from pydantic import BaseModel
 
 class ReportType(Enum):
     STATISTICS = 'Отчёты по статистике'
-    INGREDIENTS_STOP_SALES = 'Стопы (Ингредиент)'
+    INGREDIENTS_STOP_SALES = 'Стопы (тесто, сыр, пицца-соус)'
     STREET_STOP_SALES = 'Стопы (Улица)'
     SECTOR_STOP_SALES = 'Стопы (Сектор)'
     PIZZERIA_STOP_SALES = 'Стопы (Пиццерия)'
-    STOPS_AND_RESUMES = 'Стопы-возобновления'
+    STOPS_AND_RESUMES = 'Стопы (Остальные ингредиенты)'
     CANCELED_ORDERS = 'Отмены заказов'
     CHEATED_PHONE_NUMBERS = 'Мошенничество с номерами'
 
