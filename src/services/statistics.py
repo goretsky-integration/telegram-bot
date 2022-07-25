@@ -2,8 +2,11 @@ import asyncio
 import uuid
 from typing import Iterable, Callable, Awaitable, TypeVar, Generic, Type
 
+import httpx
+
 import db
 import models
+from config import app_settings
 from services import api
 
 __all__ = (
@@ -39,13 +42,15 @@ class StatisticsByCookiesAndUnitIds:
             error_unit_ids += response.error_unit_ids
         return self._response_model(units=units_statistics, error_unit_ids=error_unit_ids)
 
-    async def _request(self, account_name: str, unit_ids: Iterable[int]) -> RM:
-        cookies = await db.get_cookies(account_name)
+    async def _request(self, client: httpx.AsyncClient, account_name: str, unit_ids: Iterable[int]) -> RM:
+        cookies = await api.get_cookies(client, account_name)
         return await self._method(cookies, unit_ids)
 
     async def _request_all(self, account_names_to_unit_ids: dict[str, Iterable[int]]) -> tuple[RM, ...]:
-        tasks = (self._request(account_name, unit_ids) for account_name, unit_ids in account_names_to_unit_ids.items())
-        return await asyncio.gather(*tasks)
+        async with api.async_client(base_url=app_settings.db_api_url) as client:
+            tasks = (self._request(client, account_name, unit_ids) for account_name, unit_ids in
+                     account_names_to_unit_ids.items())
+            return await asyncio.gather(*tasks)
 
     async def _request_and_get_united_response_model(self, account_names_to_unit_ids: dict[str, Iterable[int]]) -> RM:
         responses = await self._request_all(account_names_to_unit_ids)
@@ -65,16 +70,18 @@ class StatisticsByCookiesAndUnitIdsAndNames:
     def _flatten_unit_models(nested_responses: Iterable[Iterable[UM]]) -> list[UM]:
         return [response for responses in nested_responses for response in responses]
 
-    async def _request(self, account_name: str, unit_ids_and_names: Iterable[models.UnitIdAndName]) -> RM:
-        cookies = await db.get_cookies(account_name)
+    async def _request(self, client: httpx.AsyncClient, account_name: str,
+                       unit_ids_and_names: Iterable[models.UnitIdAndName]) -> RM:
+        cookies = await api.get_cookies(client, account_name)
         return await self._method(cookies, unit_ids_and_names)
 
     async def _request_all(
             self, account_names_to_unit_ids_and_names: dict[str, Iterable[models.UnitIdAndName]],
     ) -> tuple[RM, ...]:
-        tasks = (self._request(account_name, unit_ids_and_names)
-                 for account_name, unit_ids_and_names in account_names_to_unit_ids_and_names.items())
-        return await asyncio.gather(*tasks)
+        async with api.async_client(base_url=app_settings.db_api_url) as client:
+            tasks = (self._request(client, account_name, unit_ids_and_names)
+                     for account_name, unit_ids_and_names in account_names_to_unit_ids_and_names.items())
+            return await asyncio.gather(*tasks)
 
     async def _request_and_flatten_response_unit_models(
             self, account_names_to_unit_ids_and_names: dict[str, Iterable[models.UnitIdAndName]]
@@ -92,14 +99,15 @@ class StatisticsByTokenAndUnitUUIDs(Generic[UM]):
         self._method = method
         self._unit_model = unit_model
 
-    async def request(self, account_name: str, unit_uuids: Iterable[uuid.UUID]) -> list[UM]:
-        token = await db.get_access_token(account_name)
+    async def request(self, client: httpx.AsyncClient, account_name: str, unit_uuids: Iterable[uuid.UUID]) -> list[UM]:
+        token = await api.get_access_token(client, account_name)
         return await self._method(token, unit_uuids)
 
     async def request_all(self, account_name_to_unit_uuids: dict[str, Iterable[uuid.UUID]]):
-        tasks = (self.request(account_name, unit_uuids)
-                 for account_name, unit_uuids in account_name_to_unit_uuids.items())
-        nested_responses = await asyncio.gather(*tasks)
+        async with api.async_client(base_url=app_settings.db_api_url) as client:
+            tasks = (self.request(client, account_name, unit_uuids)
+                     for account_name, unit_uuids in account_name_to_unit_uuids.items())
+            nested_responses = await asyncio.gather(*tasks)
         return [response for responses in nested_responses for response in responses]
 
     def __call__(self, account_name_to_unit_uuids: dict[str, Iterable[uuid.UUID]]):
@@ -111,7 +119,8 @@ get_delivery_speed_statistics: StatisticsByTokenAndUnitUUIDs[models.UnitDelivery
     unit_model=models.UnitDeliverySpeed,
 )
 
-get_orders_handover_time_statistics: StatisticsByTokenAndUnitUUIDs[models.UnitOrdersHandoverTime] = StatisticsByTokenAndUnitUUIDs(
+get_orders_handover_time_statistics: StatisticsByTokenAndUnitUUIDs[
+    models.UnitOrdersHandoverTime] = StatisticsByTokenAndUnitUUIDs(
     method=api.get_orders_handover_time_statistics,
     unit_model=models.UnitOrdersHandoverTime,
 )

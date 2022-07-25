@@ -1,6 +1,7 @@
+import contextlib
 import json
 import uuid
-from typing import Iterable, Sequence, TypeVar, Type, Generic
+from typing import Iterable, Sequence, TypeVar, Type, Generic, AsyncGenerator
 
 import httpx
 from pydantic import parse_obj_as
@@ -115,3 +116,29 @@ async def get_orders_handover_time_statistics(
               'sales_channels': [models.SalesChannel.DINE_IN.value]}
     response_json = await request_to_api(url, method='GET', params=params)
     return parse_obj_as(list[models.UnitOrdersHandoverTime], response_json)
+
+
+@contextlib.asynccontextmanager
+async def async_client(base_url: str = '') -> AsyncGenerator[httpx.AsyncClient, None]:
+    async with httpx.AsyncClient(base_url=base_url) as client:
+        yield client
+
+
+async def get_access_token(client: httpx.AsyncClient, account_name: str) -> models.AccessToken:
+    response = await client.get('/auth/token/', params={'account_name': account_name})
+    if response.is_success:
+        return response.json()['access_token']
+    if response.status_code == 404:
+        raise exceptions.NoTokenError
+    else:
+        raise exceptions.DatabaseAPIError
+
+
+async def get_cookies(client: httpx.AsyncClient, account_name: str) -> models.Cookies:
+    response = await client.get('/auth/cookies/', params={'account_name': account_name})
+    if response.is_success:
+        return response.json()
+    if response.status_code == 404:
+        raise exceptions.NoCookiesError
+    else:
+        raise exceptions.DatabaseAPIError

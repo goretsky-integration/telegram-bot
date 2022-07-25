@@ -1,8 +1,15 @@
-import asyncio
-from typing import Type, Iterable, Any
+"""
+- DatabaseAPIError
+    - NoCookiesError
+    - NoTokenError
+"""
 
 
 class DodoAPIError(Exception):
+    pass
+
+
+class DatabaseAPIError(Exception):
     pass
 
 
@@ -10,27 +17,9 @@ class NoneUnitIdsSetUpError(Exception):
     pass
 
 
-class NoCookiesError(Exception):
+class NoCookiesError(DatabaseAPIError):
     pass
 
 
-class NoTokenError(Exception):
+class NoTokenError(DatabaseAPIError):
     pass
-
-
-def raise_on_none(exception: Type[Exception], *exception_args: Iterable[Any]):
-    def wrapper(func):
-        if asyncio.iscoroutinefunction(func):
-            async def inner(*args, **kwargs):
-                response = await func(*args, **kwargs)
-                if response is None:
-                    raise exception(*exception_args)
-                return response
-        else:
-            def inner(*args, **kwargs):
-                response = func(*args, **kwargs)
-                if response is None:
-                    raise exception(*exception_args)
-                return response
-        return inner
-    return wrapper
