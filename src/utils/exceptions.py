@@ -1,7 +1,9 @@
 """
 - DatabaseAPIError
-    - NoCookiesError
-    - NoTokenError
+    - AuthCredentialsAPIError
+        - NoCookiesError
+        - NoTokenError
+- DodoAPIError
 """
 
 
@@ -13,13 +15,13 @@ class DatabaseAPIError(Exception):
     pass
 
 
-class NoneUnitIdsSetUpError(Exception):
+class AuthCredentialsAPIError(DatabaseAPIError):
     pass
 
 
-class NoCookiesError(DatabaseAPIError):
+class NoCookiesError(AuthCredentialsAPIError):
     pass
 
 
-class NoTokenError(DatabaseAPIError):
+class NoTokenError(AuthCredentialsAPIError):
     pass
