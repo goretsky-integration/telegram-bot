@@ -1,29 +1,16 @@
 from aiogram.types import Update
-from aiogram.utils.exceptions import MessageNotModified
 
 from bot import dp
 from utils import exceptions
 
 
-@dp.errors_handler(exception=exceptions.NoneUnitIdsSetUpError)
-async def on_none_unit_ids_set_up_error(update: Update, exception: MessageNotModified):
-    text = ('Кажется вы не добавили ни одну точку продаж для отображения 😕\n'
-            'Чтобы это сделать, нажмите на кнопку ⚙️ Настройки или введите команду /settings.\n'
-            'Далее нажмите на кнопку Отчёты по статистике и отметьте точки продаж.')
+@dp.errors_handler(exception=exceptions.NoTokenError)
+@dp.errors_handler(exception=exceptions.NoCookiesError)
+async def on_no_token_or_cookies_error(update: Update, exception: exceptions.NoTokenError | exceptions.NoCookiesError):
     if update.callback_query is not None:
-        await update.callback_query.message.answer(text)
-        await update.callback_query.answer()
+        await update.callback_query.answer('Ошибка авторизации', show_alert=True)
     elif update.message is not None:
-        await update.message.answer(text)
-    return True
-
-
-@dp.errors_handler(exception=MessageNotModified)
-async def on_message_not_modified_error(update: Update, exception: MessageNotModified):
-    if update.callback_query is not None:
-        await update.callback_query.answer('Обновлено ✅')
-    elif update.message is not None:
-        await update.message.answer('Обновлено ✅')
+        await update.message.answer('Ошибка авторизации')
     return True
 
 
