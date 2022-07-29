@@ -1,4 +1,5 @@
 from typing import Iterable
+from uuid import UUID
 
 import models
 from responses.base import Response
@@ -61,8 +62,11 @@ class KitchenPerformanceStatistics(Response):
 
 class DeliverySpeedStatistics(Response):
 
-    def __init__(self, units_delivery_statistics: Iterable[models.UnitDeliverySpeed]):
-        self.__units_statistics = units_delivery_statistics
+    def __init__(self, delivery_speed_statistics: models.DeliverySpeedStatistics,
+                 unit_uuids_to_unit_names: dict[UUID, str]):
+        self.__units_statistics = delivery_speed_statistics.units
+        self.__error_unit_uuids = delivery_speed_statistics.error_unit_uuids
+        self.__unit_uuids_to_names = unit_uuids_to_unit_names
 
     def get_sorted_units_statistics(self) -> list[models.UnitDeliverySpeed]:
         return sorted(self.__units_statistics, key=lambda unit: unit.average_delivery_order_fulfillment_time)
@@ -80,13 +84,17 @@ class DeliverySpeedStatistics(Response):
                          f' | {cooking_time}'
                          f' | {heated_shelf_time}'
                          f' | {order_trip_time}')
+        for unit_uuid in self.__error_unit_uuids:
+            unit_name = abbreviate_unit_name(self.__unit_uuids_to_names[unit_uuid])
+            lines.append(f'{unit_name} | <b>Ошибка</b>')
         return '\n'.join(lines)
 
 
 class BeingLateCertificatesStatistics(Response):
 
-    def __init__(self, units_being_late_certificates: Iterable[models.UnitBeingLateCertificatesTodayAndWeekBefore]):
-        self.__units_statistics = units_being_late_certificates
+    def __init__(self, being_late_certificates_statistics: models.BeingLateCertificatesStatistics):
+        self.__units_statistics = being_late_certificates_statistics.units
+        self.__error_unit_ids_and_names = being_late_certificates_statistics.error_unit_ids_and_names
 
     def get_sorted_units_statistics(self) -> list[models.UnitBeingLateCertificatesTodayAndWeekBefore]:
         return sorted(self.__units_statistics, reverse=True,
@@ -98,7 +106,8 @@ class BeingLateCertificatesStatistics(Response):
             lines.append(f'{report.unit_name}'
                          f' | {report.certificates_today_count} шт'
                          f' | {report.certificates_week_before_count} шт')
-
+        for unit_id_and_name in self.__error_unit_ids_and_names:
+            lines.append(f'{unit_id_and_name["name"]} | <b>Ошибка</b>')
         return '\n'.join(lines)
 
 
@@ -123,8 +132,9 @@ class TotalCookingTimeStatistics(Response):
 
 class BonusSystemStatistics(Response):
 
-    def __init__(self, units_bonus_system_statistics: Iterable[models.UnitBonusSystem]):
-        self.__units_statistics = units_bonus_system_statistics
+    def __init__(self, bonus_system_statistics: models.BonusSystemStatistics):
+        self.__units_statistics = bonus_system_statistics.units
+        self.__error_unit_ids_and_names = bonus_system_statistics.error_unit_ids_and_names
 
     def get_sorted_units_statistics(self) -> list[models.UnitBonusSystem]:
         return sorted(self.__units_statistics, reverse=True, key=lambda unit: unit.orders_with_phone_numbers_percent)
@@ -135,6 +145,8 @@ class BonusSystemStatistics(Response):
         for unit in units_statistics:
             orders_with_phone_numbers_percent = round(unit.orders_with_phone_numbers_percent)
             lines.append(f'{unit.unit_name} | {orders_with_phone_numbers_percent}% из 100')
+        for unit_id_and_name in self.__error_unit_ids_and_names:
+            lines.append(f'{unit_id_and_name["name"]} | <b>Ошибка</b>')
         return '\n'.join(lines)
 
 
@@ -204,11 +216,14 @@ class HeatedShelfOrdersAndCouriersStatistics(Response):
 
 class RestaurantCookingTime(Response):
 
-    def __init__(self, units_orders_handover_time: Iterable[models.UnitOrdersHandoverTime]):
-        self._units_statistics = units_orders_handover_time
+    def __init__(self, orders_handover_time_statistics: models.OrdersHandoverTimeStatistics,
+                 unit_uuids_to_unit_names: dict[UUID, str]):
+        self.__units_statistics = orders_handover_time_statistics.units
+        self.__error_unit_uuids = orders_handover_time_statistics.error_unit_uuids
+        self.__unit_uuids_to_names = unit_uuids_to_unit_names
 
     def get_sorted_units_statistics(self) -> list[models.UnitOrdersHandoverTime]:
-        return sorted(self._units_statistics,
+        return sorted(self.__units_statistics,
                       key=lambda unit: unit.average_tracking_pending_time + unit.average_cooking_time)
 
     def get_text(self) -> str:
@@ -216,4 +231,7 @@ class RestaurantCookingTime(Response):
         for unit in self.get_sorted_units_statistics():
             total_handover_time = humanize_seconds(unit.average_tracking_pending_time + unit.average_cooking_time)
             lines.append(f'{unit.unit_name} | {total_handover_time}')
+        for unit_uuid in self.__error_unit_uuids:
+            unit_name = abbreviate_unit_name(self.__unit_uuids_to_names[unit_uuid])
+            lines.append(f'{unit_name} | <b>Ошибка</b>')
         return '\n'.join(lines)

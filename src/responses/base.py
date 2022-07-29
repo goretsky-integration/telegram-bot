@@ -18,6 +18,9 @@ class ResponseDict(TypedDict):
 
 class Response:
 
+    def __init__(self, *args, **kwargs):
+        pass
+
     def get_text(self) -> str | None:
         pass
 
