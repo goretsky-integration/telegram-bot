@@ -9,8 +9,8 @@ __all__ = (
 )
 
 
-show_statistics = CallbackData('1', 'name')
-report_settings = CallbackData('2', 'name')
-units_by_region = CallbackData('3', 'region', 'report_type')
+show_statistics = CallbackData('1', 'report_type_name')
+report_settings = CallbackData('2', 'report_type_name')
+units_by_region = CallbackData('3', 'region', 'report_type_name')
 switch_unit_status = CallbackData('4', 'unit_id', 'report_type', 'is_unit_enabled', 'region')
 switch_all_unit_statuses = CallbackData('5', 'report_type', 'action', 'region')

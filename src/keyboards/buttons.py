@@ -39,30 +39,30 @@ class UpdateStatisticsButton(InlineKeyboardButton):
 
 class ShowStatisticsButton(InlineKeyboardButton):
 
-    def __init__(self, statistics: models.database.StatisticsReportType):
+    def __init__(self, statistics: models.StatisticsReportType):
         super().__init__(
-            text=statistics.value,
-            callback_data=callback_data.show_statistics.new(name=statistics.name)
+            text=statistics.verbose_name,
+            callback_data=callback_data.show_statistics.new(report_type_name=statistics.name)
         )
 
 
 class ReportSettingsButton(InlineKeyboardButton):
 
-    def __init__(self, report: models.database.ReportType):
+    def __init__(self, report_type: models.ReportType):
         super().__init__(
-            text=report.value,
-            callback_data=callback_data.report_settings.new(name=report.name)
+            text=report_type.verbose_name,
+            callback_data=callback_data.report_settings.new(report_type_name=report_type.name)
         )
 
 
 class ChooseRegionButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region: str):
+    def __init__(self, report_type_name: str, region: str):
         super().__init__(
             text=region,
             callback_data=callback_data.units_by_region.new(
                 region=region,
-                report_type=report_type,
+                report_type_name=report_type_name,
             ),
         )
 

@@ -36,25 +36,23 @@ class UpdateStatisticsReportMarkup(InlineKeyboardMarkup):
 
 class StatisticsReportsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self):
+    def __init__(self, statistics_report_types: Iterable[models.StatisticsReportType]):
         super().__init__(row_width=1)
-        self.add(*(buttons.ShowStatisticsButton(statistics_type)
-                   for statistics_type in models.database.StatisticsReportType))
+        self.add(*(buttons.ShowStatisticsButton(statistics_type) for statistics_type in statistics_report_types))
 
 
 class SettingsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self):
+    def __init__(self, report_types: Iterable[models.ReportType]):
         super().__init__(row_width=1)
-        self.add(*(buttons.ReportSettingsButton(report)
-                   for report in models.database.ReportType))
+        self.add(*(buttons.ReportSettingsButton(report) for report in report_types))
 
 
 class RegionsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self, report_type: str, regions: str):
+    def __init__(self, report_type_name: str, regions: Iterable[str]):
         super().__init__()
-        self.add(*(buttons.ChooseRegionButton(report_type, region) for region in regions))
+        self.add(*(buttons.ChooseRegionButton(report_type_name, region) for region in regions))
 
 
 class UnitsMarkup(InlineKeyboardMarkup):
