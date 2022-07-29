@@ -1,189 +1,250 @@
+import asyncio
+
 from aiogram.dispatcher.filters import Command
 from aiogram.types import Message, CallbackQuery
 
-import models.database
+import models
 import responses
 from bot import dp
-from services import filters, api, statistics
+from repositories import DodoAPIRepository, AuthCredentialsRepository
+from services import filters
+from services.batch_operations import (
+    get_cookies_batch,
+    get_tokens_batch,
+    get_statistics_batch_by_unit_ids,
+    get_statistics_batch_by_unit_uuids,
+    get_statistics_batch_by_unit_ids_and_names,
+)
+from services.strategies import STATISTICS_REPORT_TYPE_TO_STRATEGY
 from utils import callback_data as cd
+from utils import constants
 from utils.convert_models import UnitsConverter, to_heated_shelf_orders_and_couriers_statistics
 
 
 @dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.DAILY_REVENUE.name),
+    cd.show_statistics.filter(report_type_name=constants.StatisticsReportType.DAILY_REVENUE.name),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_daily_revenue_statistics_query(callback_query: CallbackQuery, units: UnitsConverter):
-    revenue_statistics = await api.get_revenue_statistics(units.ids)
+async def on_daily_revenue_statistics_query(
+        callback_query: CallbackQuery,
+        units: UnitsConverter,
+        dodo_client: DodoAPIRepository,
+):
+    revenue_statistics = await dodo_client.get_revenue_statistics(units.ids)
     response = responses.RevenueStatistics(revenue_statistics, units.id_to_name)
     await callback_query.message.answer(**response.as_dict())
+    await callback_query.answer()
 
 
 @dp.message_handler(
-    Command(models.StatisticsReportType.DAILY_REVENUE.name),
+    Command(constants.StatisticsReportType.DAILY_REVENUE.name),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_daily_revenue_statistics_command(message: Message, units: UnitsConverter):
-    revenue_statistics = await api.get_revenue_statistics(units.ids)
+async def on_daily_revenue_statistics_command(
+        message: Message,
+        units: UnitsConverter,
+        dodo_client: DodoAPIRepository,
+):
+    revenue_statistics = await dodo_client.get_revenue_statistics(units.ids)
     response = responses.RevenueStatistics(revenue_statistics, units.id_to_name)
     await message.answer(**response.as_dict())
 
 
 @dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.KITCHEN_PERFORMANCE.name),
+    cd.show_statistics.filter(report_type_name=[
+        constants.StatisticsReportType.KITCHEN_PERFORMANCE.name,
+        constants.StatisticsReportType.DELIVERY_PERFORMANCE.name,
+        constants.StatisticsReportType.COOKING_TIME.name,
+        constants.StatisticsReportType.DELIVERY_AWAITING_TIME.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_update_kitchen_performance_query(callback_query: CallbackQuery, units: UnitsConverter):
-    kitchen_statistics = await statistics.get_kitchen_performance_statistics(units.account_names_to_unit_ids)
-    response = responses.KitchenPerformanceStatistics(kitchen_statistics, units.id_to_name)
-    await callback_query.message.answer(**response.as_dict())
-
-
-@dp.message_handler(
-    Command(models.StatisticsReportType.KITCHEN_PERFORMANCE.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_kitchen_performance_command(message: Message, units: UnitsConverter):
-    kitchen_statistics = await statistics.get_kitchen_performance_statistics(units.account_names_to_unit_ids)
-    response = responses.KitchenPerformanceStatistics(kitchen_statistics, units.id_to_name)
-    await message.answer(**response.as_dict())
-
-
-@dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.DELIVERY_SPEED.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_delivery_speed_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_delivery_statistics = await statistics.get_delivery_speed_statistics(units.account_names_to_unit_uuids)
-    response = responses.DeliverySpeedStatistics(units_delivery_statistics)
-    await callback_query.message.answer(**response.as_dict())
-    await callback_query.answer()
-
-
-@dp.message_handler(
-    Command(models.StatisticsReportType.DELIVERY_SPEED.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_delivery_speed_command(message: Message, units: UnitsConverter):
-    units_delivery_statistics = await statistics.get_delivery_speed_statistics(units.account_names_to_unit_uuids)
-    response = responses.DeliverySpeedStatistics(units_delivery_statistics)
-    await message.answer(**response.as_dict())
-
-
-@dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.BEING_LATE_CERTIFICATES.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_being_late_certificates_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_statistics = await statistics.get_being_late_certificates_statistics(
-        units.account_names_to_unit_ids_and_names)
-    response = responses.BeingLateCertificatesStatistics(units_statistics)
+async def on_update_kitchen_performance_query(
+        callback_query: CallbackQuery,
+        units: UnitsConverter,
+        dodo_client: DodoAPIRepository,
+        auth_client: AuthCredentialsRepository,
+        callback_data: dict,
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_ids(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=strategy['model'],
+    )
+    response = strategy['response'](response_statistics, units.id_to_name)
     await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
 @dp.message_handler(
-    Command(models.StatisticsReportType.BEING_LATE_CERTIFICATES.name),
+    Command([
+        constants.StatisticsReportType.KITCHEN_PERFORMANCE.name,
+        constants.StatisticsReportType.DELIVERY_PERFORMANCE.name,
+        constants.StatisticsReportType.COOKING_TIME.name,
+        constants.StatisticsReportType.DELIVERY_AWAITING_TIME.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_being_late_certificates_command(message: Message, units: UnitsConverter):
-    units_statistics = await statistics.get_being_late_certificates_statistics(
-        units.account_names_to_unit_ids_and_names)
-    response = responses.BeingLateCertificatesStatistics(units_statistics)
+async def on_kitchen_performance_command(
+        message: Message,
+        units: UnitsConverter,
+        dodo_client: DodoAPIRepository,
+        auth_client: AuthCredentialsRepository,
+        command: Command
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_ids(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=strategy['model'],
+    )
+    response = strategy['response'](response_statistics, units.id_to_name)
     await message.answer(**response.as_dict())
 
 
 @dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.COOKING_TIME.name),
+    cd.show_statistics.filter(report_type_name=[
+        constants.StatisticsReportType.DELIVERY_SPEED.name,
+        constants.StatisticsReportType.RESTAURANT_COOKING_TIME.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_cooking_time_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_statistics = await statistics.get_kitchen_production_statistics(units.account_names_to_unit_ids)
-    response = responses.TotalCookingTimeStatistics(units_statistics, units.id_to_name)
+async def on_delivery_speed_query(
+        callback_query: CallbackQuery,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+        callback_data: dict,
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
+    tokens = await get_tokens_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_uuids(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        account_tokens=tokens,
+        account_names_to_unit_uuids=units.account_names_to_unit_uuids,
+        response_model=strategy['model']
+    )
+    response = strategy['response'](response_statistics, units.uuids_to_names)
     await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
 @dp.message_handler(
-    Command(models.StatisticsReportType.COOKING_TIME.name),
+    Command([
+        constants.StatisticsReportType.DELIVERY_SPEED.name,
+        constants.StatisticsReportType.RESTAURANT_COOKING_TIME.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_cooking_time_command(message: Message, units: UnitsConverter):
-    units_statistics = await statistics.get_kitchen_production_statistics(units.account_names_to_unit_ids)
-    response = responses.TotalCookingTimeStatistics(units_statistics, units.id_to_name)
+async def on_delivery_speed_command(
+        message: Message,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+        command: Command,
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
+    tokens = await get_tokens_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_uuids(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        account_tokens=tokens,
+        account_names_to_unit_uuids=units.account_names_to_unit_uuids,
+        response_model=strategy['model']
+    )
+    response = strategy['response'](response_statistics, units.uuids_to_names)
     await message.answer(**response.as_dict())
 
 
 @dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.DELIVERY_PERFORMANCE.name),
+    cd.show_statistics.filter(report_type_name=[
+        constants.StatisticsReportType.BEING_LATE_CERTIFICATES.name,
+        constants.StatisticsReportType.BONUS_SYSTEM.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_delivery_performance_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_statistics = await statistics.get_delivery_performance_statistics(units.account_names_to_unit_ids)
-    response = responses.DeliveryPerformanceStatistics(units_statistics, units.id_to_name)
+async def on_being_late_certificates_query(
+        callback_query: CallbackQuery,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+        callback_data: dict,
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_ids_and_names(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids_and_names=units.account_names_to_unit_ids_and_names,
+        response_model=strategy['model'],
+    )
+    response = strategy['response'](response_statistics)
     await callback_query.message.answer(**response.as_dict())
     await callback_query.answer()
 
 
 @dp.message_handler(
-    Command(models.StatisticsReportType.DELIVERY_PERFORMANCE.name),
+    Command([
+        constants.StatisticsReportType.BEING_LATE_CERTIFICATES.name,
+        constants.StatisticsReportType.BONUS_SYSTEM.name,
+    ]),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_delivery_performance_command(message: Message, units: UnitsConverter):
-    units_statistics = await statistics.get_delivery_performance_statistics(units.account_names_to_unit_ids)
-    response = responses.DeliveryPerformanceStatistics(units_statistics, units.id_to_name)
+async def on_being_late_certificates_command(
+        message: Message,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+        command: Command,
+):
+    strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    response_statistics = await get_statistics_batch_by_unit_ids_and_names(
+        dodo_client_method=strategy['method'],
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids_and_names=units.account_names_to_unit_ids_and_names,
+        response_model=strategy['model'],
+    )
+    response = strategy['response'](response_statistics)
     await message.answer(**response.as_dict())
 
 
 @dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.DELIVERY_AWAITING_TIME.name),
+    cd.show_statistics.filter(report_type_name=constants.StatisticsReportType.AWAITING_ORDERS.name),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_delivery_awaiting_time_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_statistics = await statistics.get_heated_shelf_statistics(units.account_names_to_unit_ids)
-    response = responses.HeatedShelfTimeStatistics(units_statistics, units.id_to_name)
-    await callback_query.message.answer(**response.as_dict())
-    await callback_query.answer()
-
-
-@dp.message_handler(
-    Command(models.StatisticsReportType.DELIVERY_AWAITING_TIME.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_delivery_awaiting_time_command(message: Message, units: UnitsConverter):
-    units_statistics = await statistics.get_heated_shelf_statistics(units.account_names_to_unit_ids)
-    response = responses.HeatedShelfTimeStatistics(units_statistics, units.id_to_name)
-    await message.answer(**response.as_dict())
-
-
-@dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.BONUS_SYSTEM.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_bonus_system_query(callback_query: CallbackQuery, units: UnitsConverter):
-    units_statistics = await statistics.get_bonus_system_statistics(units.account_names_to_unit_ids_and_names)
-    response = responses.BonusSystemStatistics(units_statistics)
-    await callback_query.message.answer(**response.as_dict())
-    await callback_query.answer()
-
-
-@dp.message_handler(
-    Command(models.StatisticsReportType.BONUS_SYSTEM.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_bonus_system_command(message: Message, units: UnitsConverter):
-    units_statistics = await statistics.get_bonus_system_statistics(units.account_names_to_unit_ids_and_names)
-    response = responses.BonusSystemStatistics(units_statistics)
-    await message.answer(**response.as_dict())
-
-
-@dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.AWAITING_ORDERS.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_awaiting_orders_query(callback_query: CallbackQuery, units: UnitsConverter):
-    heated_shelf_statistics = await statistics.get_heated_shelf_statistics(units.account_names_to_unit_ids)
-    couriers_statistics = await statistics.get_couriers_statistics(units.account_names_to_unit_ids)
+async def on_awaiting_orders_query(
+        callback_query: CallbackQuery,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+):
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    task1 = get_statistics_batch_by_unit_ids(
+        dodo_client_method=DodoAPIRepository.get_heated_shelf_statistics,
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=models.HeatedShelfStatistics,
+    )
+    task2 = get_statistics_batch_by_unit_ids(
+        dodo_client_method=DodoAPIRepository.get_couriers_statistics,
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=models.CouriersStatistics,
+    )
+    heated_shelf_statistics, couriers_statistics = await asyncio.gather(task1, task2)
     heated_shelf_orders_and_couriers_statistics = to_heated_shelf_orders_and_couriers_statistics(
         heated_shelf_statistics, couriers_statistics)
     response = responses.HeatedShelfOrdersAndCouriersStatistics(
@@ -193,37 +254,35 @@ async def on_awaiting_orders_query(callback_query: CallbackQuery, units: UnitsCo
 
 
 @dp.message_handler(
-    Command(models.StatisticsReportType.AWAITING_ORDERS.name),
+    Command(constants.StatisticsReportType.AWAITING_ORDERS.name),
     filters.UnitIdsRequiredFilter(),
 )
-async def on_awaiting_orders_command(message: Message, units: UnitsConverter):
-    heated_shelf_statistics = await statistics.get_heated_shelf_statistics(units.account_names_to_unit_ids)
-    couriers_statistics = await statistics.get_couriers_statistics(units.account_names_to_unit_ids)
+async def on_awaiting_orders_command(
+        message: Message,
+        units: UnitsConverter,
+        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIRepository,
+):
+    accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
+    task1 = get_statistics_batch_by_unit_ids(
+        dodo_client_method=DodoAPIRepository.get_heated_shelf_statistics,
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=models.HeatedShelfStatistics,
+    )
+    task2 = get_statistics_batch_by_unit_ids(
+        dodo_client_method=DodoAPIRepository.get_couriers_statistics,
+        dodo_client=dodo_client,
+        accounts_cookies=accounts_cookies,
+        account_names_to_unit_ids=units.account_names_to_unit_ids,
+        response_model=models.CouriersStatistics,
+    )
+    heated_shelf_statistics, couriers_statistics = await asyncio.gather(task1, task2)
     heated_shelf_orders_and_couriers_statistics = to_heated_shelf_orders_and_couriers_statistics(
         heated_shelf_statistics, couriers_statistics)
     response = responses.HeatedShelfOrdersAndCouriersStatistics(
         heated_shelf_orders_and_couriers_statistics, units.id_to_name)
-    await message.answer(**response.as_dict())
-
-
-@dp.callback_query_handler(
-    cd.show_statistics.filter(name=models.StatisticsReportType.RESTAURANT_COOKING_TIME.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_restaurant_cooking_time_command(callback_query: CallbackQuery, units: UnitsConverter):
-    units_orders_handover_time = await statistics.get_orders_handover_time_statistics(units.account_names_to_unit_uuids)
-    response = responses.RestaurantCookingTime(units_orders_handover_time)
-    await callback_query.message.answer(**response.as_dict())
-    await callback_query.answer()
-
-
-@dp.message_handler(
-    Command(models.StatisticsReportType.RESTAURANT_COOKING_TIME.name),
-    filters.UnitIdsRequiredFilter(),
-)
-async def on_restaurant_cooking_time_command(message: Message, units: UnitsConverter):
-    units_orders_handover_time = await statistics.get_orders_handover_time_statistics(units.account_names_to_unit_uuids)
-    response = responses.RestaurantCookingTime(units_orders_handover_time)
     await message.answer(**response.as_dict())
 
 
@@ -236,7 +295,7 @@ async def on_no_enabled_units_query(callback_query: CallbackQuery):
     await callback_query.answer()
 
 
-@dp.message_handler(Command([report_type.name for report_type in models.StatisticsReportType]))
+@dp.message_handler(Command([report_type.name for report_type in constants.StatisticsReportType]))
 async def on_no_enabled_units_command(message: Message):
     await message.answer('Кажется вы не добавили ни одну точку продаж для отображения 😕\n'
                          'Чтобы это сделать, нажмите на кнопку ⚙️ Настройки или введите команду /settings.\n'
