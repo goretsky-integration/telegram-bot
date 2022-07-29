@@ -1,18 +1,23 @@
 from aiogram import Bot, Dispatcher
 from aiogram.types import ParseMode, BotCommand
 
-import db
 from config import app_settings
+from middlewares import DBAPIClientMiddleware, AuthClientMiddleware, DodoAPIClientMiddleware
 
 __all__ = (
     'bot',
     'dp',
-    'on_shutdown',
     'on_startup',
 )
 
 bot = Bot(app_settings.bot_token, parse_mode=ParseMode.HTML)
 dp = Dispatcher(bot)
+
+
+def setup_middlewares(dispatcher: Dispatcher):
+    dispatcher.setup_middleware(DBAPIClientMiddleware())
+    dispatcher.setup_middleware(AuthClientMiddleware())
+    dispatcher.setup_middleware(DodoAPIClientMiddleware())
 
 
 async def setup_bot_commands(bot: Bot):
@@ -35,8 +40,5 @@ async def setup_bot_commands(bot: Bot):
 
 
 async def on_startup(dispatcher: Dispatcher):
+    setup_middlewares(dispatcher)
     await setup_bot_commands(dispatcher.bot)
-
-
-async def on_shutdown(dispatcher: Dispatcher):
-    await db.close_redis_connection()
