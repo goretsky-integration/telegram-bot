@@ -46,6 +46,10 @@ class UnitsConverter:
         return self.units_to_ids_and_names(self.units)
 
     @property
+    def uuids_to_names(self) -> dict[uuid.UUID, str]:
+        return {unit.uuid: unit.name for unit in self.units}
+
+    @property
     def account_names_to_units(self) -> dict[str, list[models.Unit]]:
         account_name_to_units: dict[str, list[models.Unit]] = collections.defaultdict(list)
         for unit in self.units:
@@ -67,6 +71,10 @@ class UnitsConverter:
     def account_names_to_unit_uuids(self) -> dict[str, list[uuid.UUID]]:
         return {account_name: self.units_to_uuids(units)
                 for account_name, units in self.account_names_to_units.items()}
+
+    @property
+    def account_names(self) -> set[str]:
+        return {unit.account_name for unit in self.units}
 
 
 def unit_id_to_model(models_collection: Iterable[M]) -> dict[int, M]:
