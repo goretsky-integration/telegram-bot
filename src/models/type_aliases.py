@@ -1,11 +1,12 @@
-from typing import TypeAlias
+from typing import TypeAlias, TypedDict
 
 __all__ = (
-    'SerializedJSON',
     'Cookies',
-    'AccessToken',
 )
 
-SerializedJSON: TypeAlias = dict | list
 Cookies: TypeAlias = dict[str, str]
-AccessToken: TypeAlias = str
+
+
+class UnitIdAndName(TypedDict):
+    id: int
+    name: str

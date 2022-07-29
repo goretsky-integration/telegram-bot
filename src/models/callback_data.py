@@ -10,16 +10,16 @@ __all__ = (
 
 
 class ReportTypeCallbackData(TypedDict):
-    name: str
+    report_type_name: str
 
 
 class StatisticsReportTypeCallbackData(TypedDict):
-    name: str
+    report_type_name: str
 
 
 class UnitsByRegionCallbackData(TypedDict):
     region: str
-    report_type: str
+    report_type_name: str
 
 
 class SwitchUnitStatusCallbackData(TypedDict):

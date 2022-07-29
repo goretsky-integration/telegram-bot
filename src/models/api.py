@@ -1,12 +1,24 @@
+"""
+Cookies and unit ids based models.
+
+
+Cookies, unit ids and unit names based models.
+- UnitBeingLateCertificatesTodayAndWeekBefore
+- UnitBonusSystem
+
+Tokens and unit UUIDs based models.
+- UnitDeliverySpeed
+- UnitOrdersHandoverTime
+
+"""
+
 import uuid
 from enum import Enum
-from typing import TypedDict
 
 from pydantic import BaseModel, NonNegativeInt
 
 __all__ = (
     'RevenueForTodayAndWeekBeforeStatistics',
-    'RestaurantOrdersStatistics',
     'RevenueStatistics',
     'UnitsRevenueMetadata',
     'UnitBonusSystem',
@@ -22,7 +34,6 @@ __all__ = (
     'CouriersStatistics',
     'KitchenProductionStatistics',
     'UnitKitchenProduction',
-    'UnitIdAndName',
     'UnitHeatedShelfOrdersAndCouriers',
     'HeatedShelfOrdersAndCouriersStatistics',
     'UnitOrdersHandoverTime',
@@ -47,29 +58,6 @@ class RevenueStatistics(BaseModel):
     units: list[RevenueForTodayAndWeekBeforeStatistics]
     metadata: UnitsRevenueMetadata
     error_unit_ids: list[int]
-
-
-class RestaurantOrdersStatistics(BaseModel):
-    department: str
-    orders_with_phone_numbers_count: int
-    orders_with_phone_numbers_percentage: int
-    total_orders_count: int
-
-
-class UnitBeingLateCertificatesTodayAndWeekBefore(BaseModel):
-    unit_id: int
-    unit_name: str
-    certificates_today_count: int
-    certificates_week_before_count: int
-
-
-class UnitDeliverySpeed(BaseModel):
-    unit_uuid: uuid.UUID
-    unit_name: str
-    average_cooking_time: int
-    average_delivery_order_fulfillment_time: int
-    average_heated_shelf_time: int
-    average_order_trip_time: int
 
 
 class UnitKitchenPerformance(BaseModel):
@@ -127,18 +115,6 @@ class KitchenProductionStatistics(BaseModel):
     error_unit_ids: list[int]
 
 
-class UnitBonusSystem(BaseModel):
-    unit_name: str
-    orders_with_phone_numbers_count: int
-    orders_with_phone_numbers_percent: float
-    total_orders_count: int
-
-
-class UnitIdAndName(TypedDict):
-    id: int
-    name: str
-
-
 class UnitHeatedShelfOrdersAndCouriers(BaseModel):
     unit_id: int
     awaiting_orders_count: int
@@ -149,6 +125,26 @@ class UnitHeatedShelfOrdersAndCouriers(BaseModel):
 class HeatedShelfOrdersAndCouriersStatistics(BaseModel):
     units: list[UnitHeatedShelfOrdersAndCouriers]
     error_unit_ids: list[int]
+
+
+# Models by cookies, unit ids and unit names
+
+
+class UnitBeingLateCertificatesTodayAndWeekBefore(BaseModel):
+    unit_id: int
+    unit_name: str
+    certificates_today_count: int
+    certificates_week_before_count: int
+
+
+class UnitBonusSystem(BaseModel):
+    unit_name: str
+    orders_with_phone_numbers_count: int
+    orders_with_phone_numbers_percent: float
+    total_orders_count: int
+
+
+# Models by tokens and unit UUIDs
 
 
 class SalesChannel(Enum):
@@ -164,3 +160,12 @@ class UnitOrdersHandoverTime(BaseModel):
     average_cooking_time: int
     average_heated_shelf_time: int
     sales_channels: list[SalesChannel]
+
+
+class UnitDeliverySpeed(BaseModel):
+    unit_uuid: uuid.UUID
+    unit_name: str
+    average_cooking_time: int
+    average_delivery_order_fulfillment_time: int
+    average_heated_shelf_time: int
+    average_order_trip_time: int
