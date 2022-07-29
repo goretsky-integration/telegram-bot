@@ -17,6 +17,8 @@ from enum import Enum
 
 from pydantic import BaseModel, NonNegativeInt
 
+from models.type_aliases import UnitIdAndName
+
 __all__ = (
     'RevenueForTodayAndWeekBeforeStatistics',
     'RevenueStatistics',
@@ -38,6 +40,10 @@ __all__ = (
     'HeatedShelfOrdersAndCouriersStatistics',
     'UnitOrdersHandoverTime',
     'SalesChannel',
+    'OrdersHandoverTimeStatistics',
+    'DeliverySpeedStatistics',
+    'BonusSystemStatistics',
+    'BeingLateCertificatesStatistics',
 )
 
 
@@ -137,11 +143,21 @@ class UnitBeingLateCertificatesTodayAndWeekBefore(BaseModel):
     certificates_week_before_count: int
 
 
+class BeingLateCertificatesStatistics(BaseModel):
+    units: list[UnitBeingLateCertificatesTodayAndWeekBefore]
+    error_unit_ids_and_names: list[UnitIdAndName]
+
+
 class UnitBonusSystem(BaseModel):
     unit_name: str
     orders_with_phone_numbers_count: int
     orders_with_phone_numbers_percent: float
     total_orders_count: int
+
+
+class BonusSystemStatistics(BaseModel):
+    units: list[UnitBonusSystem]
+    error_unit_ids_and_names: list[UnitIdAndName]
 
 
 # Models by tokens and unit UUIDs
@@ -162,6 +178,11 @@ class UnitOrdersHandoverTime(BaseModel):
     sales_channels: list[SalesChannel]
 
 
+class OrdersHandoverTimeStatistics(BaseModel):
+    units: list[UnitOrdersHandoverTime]
+    error_unit_uuids: list[uuid.UUID]
+
+
 class UnitDeliverySpeed(BaseModel):
     unit_uuid: uuid.UUID
     unit_name: str
@@ -169,3 +190,8 @@ class UnitDeliverySpeed(BaseModel):
     average_delivery_order_fulfillment_time: int
     average_heated_shelf_time: int
     average_order_trip_time: int
+
+
+class DeliverySpeedStatistics(BaseModel):
+    units: list[UnitDeliverySpeed]
+    error_unit_uuids: list[uuid.UUID]
