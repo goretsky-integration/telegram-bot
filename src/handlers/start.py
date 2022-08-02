@@ -20,6 +20,12 @@ async def on_statistics_reports_button(message: Message, db: DatabaseRepository)
     await message.answer(**responses.StatisticsReportsMenu(statistics_report_types).as_dict())
 
 
+@dp.message_handler(Command('hide_keyboard'))
+async def on_hide_keyboard_command(message: Message):
+    await message.reply(**responses.HideKeyboard().as_dict())
+
+
+@dp.message_handler(Command('show_keyboard'))
 @dp.message_handler(CommandStart())
 async def on_start(message: Message):
-    await message.answer(**responses.MainMenu().as_dict())
+    await message.reply(**responses.ShowKeyboard().as_dict())

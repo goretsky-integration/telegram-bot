@@ -25,6 +25,8 @@ async def setup_bot_commands(bot: Bot):
         BotCommand('start', '👨‍💻 Главное меню'),
         BotCommand('settings', '⚙️ Настройки'),
         BotCommand('reports', '🔎 Отчёты по статистике'),
+        BotCommand('show_keyboard', 'Показать клавиатуру'),
+        BotCommand('hide_keyboard', 'Скрыть клавиатуру'),
         BotCommand('bonus_system', 'Бонусная система'),
         BotCommand('cooking_time', 'Время приготовления'),
         BotCommand('restaurant_cooking_time', 'Время приготовления (ресторан)'),

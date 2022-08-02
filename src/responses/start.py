@@ -1,23 +1,35 @@
 from typing import Iterable
 
+from aiogram.types import ReplyKeyboardRemove
+
 import keyboards
 import models
 from responses.base import Response, ReplyMarkup
 
 __all__ = (
-    'MainMenu',
+    'ShowKeyboard',
     'StatisticsReportsMenu',
     'SettingsMenu',
+    'HideKeyboard',
 )
 
 
-class MainMenu(Response):
+class ShowKeyboard(Response):
 
     def get_text(self) -> str | None:
         return 'Приветствую 👋'
 
     def get_reply_markup(self) -> ReplyMarkup | None:
         return keyboards.MainMenuMarkup()
+
+
+class HideKeyboard(Response):
+
+    def get_text(self) -> str:
+        return 'Клавиатура спрятана 🙈'
+
+    def get_reply_markup(self) -> ReplyMarkup:
+        return ReplyKeyboardRemove()
 
 
 class StatisticsReportsMenu(Response):

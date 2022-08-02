@@ -1,6 +1,6 @@
 from typing import TypeAlias, TypedDict
 
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
 __all__ = (
     'Response',
@@ -8,7 +8,7 @@ __all__ = (
     'ReplyMarkup',
 )
 
-ReplyMarkup: TypeAlias = InlineKeyboardMarkup | ReplyKeyboardMarkup
+ReplyMarkup: TypeAlias = InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove
 
 
 class ResponseDict(TypedDict):
