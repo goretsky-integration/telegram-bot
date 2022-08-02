@@ -22,13 +22,8 @@ def setup_middlewares(dispatcher: Dispatcher):
 
 async def setup_bot_commands(bot: Bot):
     await bot.set_my_commands([
-        BotCommand('start', '👨‍💻 Главное меню'),
-        BotCommand('settings', '⚙️ Настройки'),
-        BotCommand('reports', '🔎 Отчёты по статистике'),
-        BotCommand('show_keyboard', 'Показать клавиатуру'),
-        BotCommand('hide_keyboard', 'Скрыть клавиатуру'),
         BotCommand('bonus_system', 'Бонусная система'),
-        BotCommand('cooking_time', 'Время приготовления'),
+        BotCommand('cooking_time', 'Время приготовления (общее)'),
         BotCommand('restaurant_cooking_time', 'Время приготовления (ресторан)'),
         BotCommand('daily_revenue', 'Выручка за сегодня'),
         BotCommand('delivery_speed', 'Скорость доставки'),
@@ -37,7 +32,11 @@ async def setup_bot_commands(bot: Bot):
         BotCommand('delivery_performance', 'Производительность доставки'),
         BotCommand('being_late_certificates', 'Сертификаты за опоздание'),
         BotCommand('awaiting_orders', 'Заказов остывает на полке - курьеры всего / в очереди'),
-
+        BotCommand('start', '👨‍💻 Главное меню'),
+        BotCommand('settings', '⚙️ Настройки'),
+        BotCommand('reports', '🔎 Отчёты по статистике'),
+        BotCommand('show_keyboard', 'Показать клавиатуру'),
+        BotCommand('hide_keyboard', 'Скрыть клавиатуру'),
     ])
 
 
