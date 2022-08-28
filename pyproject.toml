@@ -6,8 +6,8 @@ authors = ["usbtypec1 <eldos.baktybekov@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-aiogram = "^2.21"
-pydantic = "^1.9.1"
+aiogram = "^2.22.1"
+pydantic = "^1.9.2"
 python-dotenv = "^0.20.0"
 pendulum = "^2.1.2"
 httpx = "^0.23.0"
@@ -16,6 +16,7 @@ motor = "^3.0.0"
 bs4 = "^0.0.1"
 pytest-asyncio = "^0.19.0"
 loguru = "^0.6.0"
+dodo-lib-usbtypec1 = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

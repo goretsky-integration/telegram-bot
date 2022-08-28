@@ -1,6 +1,6 @@
 from aiogram.dispatcher.middlewares import LifetimeControllerMiddleware
+from dodolib import DatabaseClient
 
-from repositories import DatabaseRepository
 from services.dependencies import get_db_client
 
 __all__ = (
@@ -14,5 +14,5 @@ class DBAPIClientMiddleware(LifetimeControllerMiddleware):
         data['db'] = get_db_client()
 
     async def post_process(self, obj, data: dict, *args):
-        db: DatabaseRepository = data['db']
+        db: DatabaseClient = data['db']
         await db.close()
