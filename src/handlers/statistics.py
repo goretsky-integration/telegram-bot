@@ -2,11 +2,11 @@ import asyncio
 
 from aiogram.dispatcher.filters import Command
 from aiogram.types import Message, CallbackQuery
+from dodolib import DodoAPIClient, AuthClient
 
 import models
 import responses
 from bot import dp
-from repositories import DodoAPIRepository, AuthCredentialsRepository
 from services import filters
 from services.batch_operations import (
     get_cookies_batch,
@@ -28,7 +28,7 @@ from utils.convert_models import UnitsConverter, to_heated_shelf_orders_and_cour
 async def on_daily_revenue_statistics_query(
         callback_query: CallbackQuery,
         units: UnitsConverter,
-        dodo_client: DodoAPIRepository,
+        dodo_client: DodoAPIClient,
 ):
     revenue_statistics = await dodo_client.get_revenue_statistics(units.ids)
     response = responses.RevenueStatistics(revenue_statistics, units.id_to_name)
@@ -43,7 +43,7 @@ async def on_daily_revenue_statistics_query(
 async def on_daily_revenue_statistics_command(
         message: Message,
         units: UnitsConverter,
-        dodo_client: DodoAPIRepository,
+        dodo_client: DodoAPIClient,
 ):
     revenue_statistics = await dodo_client.get_revenue_statistics(units.ids)
     response = responses.RevenueStatistics(revenue_statistics, units.id_to_name)
@@ -62,8 +62,8 @@ async def on_daily_revenue_statistics_command(
 async def on_update_kitchen_performance_query(
         callback_query: CallbackQuery,
         units: UnitsConverter,
-        dodo_client: DodoAPIRepository,
-        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIClient,
+        auth_client: AuthClient,
         callback_data: dict,
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
@@ -92,8 +92,8 @@ async def on_update_kitchen_performance_query(
 async def on_kitchen_performance_command(
         message: Message,
         units: UnitsConverter,
-        dodo_client: DodoAPIRepository,
-        auth_client: AuthCredentialsRepository,
+        dodo_client: DodoAPIClient,
+        auth_client: AuthClient,
         command: Command
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
@@ -119,8 +119,8 @@ async def on_kitchen_performance_command(
 async def on_delivery_speed_query(
         callback_query: CallbackQuery,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
         callback_data: dict,
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
@@ -147,8 +147,8 @@ async def on_delivery_speed_query(
 async def on_delivery_speed_command(
         message: Message,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
         command: Command,
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
@@ -174,8 +174,8 @@ async def on_delivery_speed_command(
 async def on_being_late_certificates_query(
         callback_query: CallbackQuery,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
         callback_data: dict,
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[callback_data['report_type_name']]
@@ -202,8 +202,8 @@ async def on_being_late_certificates_query(
 async def on_being_late_certificates_command(
         message: Message,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
         command: Command,
 ):
     strategy = STATISTICS_REPORT_TYPE_TO_STRATEGY[command.command.upper()]
@@ -226,19 +226,19 @@ async def on_being_late_certificates_command(
 async def on_awaiting_orders_query(
         callback_query: CallbackQuery,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
 ):
     accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
     task1 = get_statistics_batch_by_unit_ids(
-        dodo_client_method=DodoAPIRepository.get_heated_shelf_statistics,
+        dodo_client_method=DodoAPIClient.get_heated_shelf_time_statistics,
         dodo_client=dodo_client,
         accounts_cookies=accounts_cookies,
         account_names_to_unit_ids=units.account_names_to_unit_ids,
         response_model=models.HeatedShelfStatistics,
     )
     task2 = get_statistics_batch_by_unit_ids(
-        dodo_client_method=DodoAPIRepository.get_couriers_statistics,
+        dodo_client_method=DodoAPIClient.get_couriers_statistics,
         dodo_client=dodo_client,
         accounts_cookies=accounts_cookies,
         account_names_to_unit_ids=units.account_names_to_unit_ids,
@@ -260,19 +260,19 @@ async def on_awaiting_orders_query(
 async def on_awaiting_orders_command(
         message: Message,
         units: UnitsConverter,
-        auth_client: AuthCredentialsRepository,
-        dodo_client: DodoAPIRepository,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
 ):
     accounts_cookies = await get_cookies_batch(auth_client, units.account_names)
     task1 = get_statistics_batch_by_unit_ids(
-        dodo_client_method=DodoAPIRepository.get_heated_shelf_statistics,
+        dodo_client_method=DodoAPIClient.get_heated_shelf_time_statistics,
         dodo_client=dodo_client,
         accounts_cookies=accounts_cookies,
         account_names_to_unit_ids=units.account_names_to_unit_ids,
         response_model=models.HeatedShelfStatistics,
     )
     task2 = get_statistics_batch_by_unit_ids(
-        dodo_client_method=DodoAPIRepository.get_couriers_statistics,
+        dodo_client_method=DodoAPIClient.get_couriers_statistics,
         dodo_client=dodo_client,
         accounts_cookies=accounts_cookies,
         account_names_to_unit_ids=units.account_names_to_unit_ids,

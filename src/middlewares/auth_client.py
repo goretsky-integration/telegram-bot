@@ -1,6 +1,6 @@
 from aiogram.dispatcher.middlewares import LifetimeControllerMiddleware
+from dodolib import AuthClient
 
-from repositories import AuthCredentialsRepository
 from services.dependencies import get_auth_client
 
 __all__ = (
@@ -14,5 +14,5 @@ class AuthClientMiddleware(LifetimeControllerMiddleware):
         data['auth_client'] = get_auth_client()
 
     async def post_process(self, obj, data: dict, *args):
-        auth_client: AuthCredentialsRepository = data['auth_client']
+        auth_client: AuthClient = data['auth_client']
         await auth_client.close()

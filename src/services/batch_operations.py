@@ -2,8 +2,9 @@ import asyncio
 from typing import Iterable, TypeVar
 from uuid import UUID
 
+from dodolib import AuthClient
+
 import models
-from repositories import AuthCredentialsRepository
 from utils import exceptions
 
 __all__ = (
@@ -18,7 +19,7 @@ _T = TypeVar('_T')
 
 
 async def get_cookies_batch(
-        auth_client: AuthCredentialsRepository,
+        auth_client: AuthClient,
         account_names: Iterable[str],
 ) -> tuple[models.AuthCookies | exceptions.NoCookiesError, ...]:
     tasks = (auth_client.get_cookies(account_name) for account_name in account_names)
@@ -26,7 +27,7 @@ async def get_cookies_batch(
 
 
 async def get_tokens_batch(
-        auth_client: AuthCredentialsRepository,
+        auth_client: AuthClient,
         account_names: Iterable[str],
 ) -> tuple[models.AuthToken | exceptions.NoTokenError, ...]:
     tasks = (auth_client.get_tokens(account_name) for account_name in account_names)
@@ -89,7 +90,6 @@ async def get_statistics_batch_by_unit_uuids(
             tasks.append(dodo_client_method(dodo_client, account_token.access_token, unit_uuids))
 
     responses: tuple[list[_T] | exceptions.DodoAPIRequestByUnitUUIDsError, ...] = await asyncio.gather(*tasks, return_exceptions=True)
-
     for statistics_response in responses:
         if isinstance(statistics_response, exceptions.DodoAPIRequestByUnitUUIDsError):
             error_unit_uuids += statistics_response.unit_uuids

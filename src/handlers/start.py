@@ -1,21 +1,21 @@
 from aiogram.dispatcher.filters import Text, Command, CommandStart
 from aiogram.types import Message
+from dodolib import DatabaseClient
 
 import responses
 from bot import dp
-from repositories import DatabaseRepository
 
 
 @dp.message_handler(Command('settings'))
 @dp.message_handler(Text('⚙️ Настройки'))
-async def on_settings_button(message: Message, db: DatabaseRepository):
+async def on_settings_button(message: Message, db: DatabaseClient):
     report_types = await db.get_report_types()
     await message.answer(**responses.SettingsMenu(report_types).as_dict())
 
 
 @dp.message_handler(Command('reports'))
 @dp.message_handler(Text('📊 Отчёты/Статистика'))
-async def on_statistics_reports_button(message: Message, db: DatabaseRepository):
+async def on_statistics_reports_button(message: Message, db: DatabaseClient):
     statistics_report_types = await db.get_statistics_report_types()
     await message.answer(**responses.StatisticsReportsMenu(statistics_report_types).as_dict())
 
