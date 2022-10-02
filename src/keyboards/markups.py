@@ -1,9 +1,10 @@
 from typing import Iterable
 
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, InlineKeyboardButton
 
 import models
 from . import buttons
+from utils.callback_data import prepopulated_period
 
 __all__ = (
     'UpdateStatisticsReportMarkup',
@@ -12,6 +13,7 @@ __all__ = (
     'RegionsMarkup',
     'SettingsMarkup',
     'UnitsMarkup',
+    'PeriodsMarkup',
 )
 
 
@@ -90,3 +92,15 @@ class UnitsMarkup(InlineKeyboardMarkup):
         if any(self.__enabled_unit_ids):
             row.append(buttons.DisableAllUnitsByRegionButton(self.__report_type, self.__region))
         self.row(*row)
+
+
+class PeriodsMarkup(InlineKeyboardMarkup):
+
+    def __init__(self):
+        super().__init__(row_width=1)
+        self.add(
+            InlineKeyboardButton('последние 7 дней', callback_data=prepopulated_period.new(period='last-7-days')),
+            InlineKeyboardButton('последние 14 дней', callback_data=prepopulated_period.new(period='last-14-days')),
+            InlineKeyboardButton('последние 30 дней', callback_data=prepopulated_period.new(period='last-30-days')),
+        )
+        self.row(InlineKeyboardButton('Другой период', callback_data='other-period'))

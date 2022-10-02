@@ -32,6 +32,7 @@ async def setup_bot_commands(bot: Bot):
         BotCommand('delivery_performance', 'Производительность доставки'),
         BotCommand('being_late_certificates', 'Сертификаты за опоздание'),
         BotCommand('awaiting_orders', 'Заказов остывает на полке - курьеры всего / в очереди'),
+        BotCommand('write_offs_report', 'Отчет о списаниях (архив)'),
         BotCommand('start', '👨‍💻 Главное меню'),
         BotCommand('settings', '⚙️ Настройки'),
         BotCommand('reports', '🔎 Отчёты по статистике'),
