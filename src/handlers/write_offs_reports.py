@@ -1,32 +1,27 @@
-from aiogram.dispatcher.filters import Command, Text
+import tempfile
+
+from aiogram.dispatcher.filters import Command
 from aiogram.types import Message, CallbackQuery
 
 from bot import dp
 from responses import WriteOffsReportPeriodResponse
-from services import periods
-from utils import logger
-from utils.callback_data import prepopulated_period
-
-
-@dp.callback_query_handler(Text('other-period'), state='*')
-async def on_other_write_offs_period(callback_query: CallbackQuery):
-    await callback_query.answer('В разработке 🏗', show_alert=True)
+from services import periods, write_offs_api
+from utils.callback_data import last_n_days_period
 
 
 @dp.callback_query_handler(
-    prepopulated_period.filter(period=['last-7-days', 'last-14-days', 'last-30-days']),
+    last_n_days_period.filter(),
     state='*',
 )
 async def on_prepopulated_write_offs_periods(callback_query: CallbackQuery, callback_data: dict):
-    period = callback_data['period']
-    period_to_callback = {
-        'last-7-days': periods.get_last_7_days_period,
-        'last-14-days': periods.get_last_14_days_period,
-        'last-30-days': periods.get_last_30_days_period,
-    }
-    get_period = period_to_callback[period]
-    logger.debug(f'Period {period}')
-    await callback_query.answer('В разработке 🏗', show_alert=True)
+    days_before_count = int(callback_data['days_before_count'])
+    period = periods.get_period_from(days_before_count)
+    write_offs_from_api = write_offs_api.get_write_offs_by_period(period)
+    with tempfile.NamedTemporaryFile() as temp_file:
+        file_path = f'{temp_file.name}.xlsx'
+        write_offs_api.generate_write_offs_excel_report(file_path, write_offs_from_api)
+        with open(file_path, 'rb') as file:
+            await callback_query.message.answer_document(file)
 
 
 @dp.message_handler(Command('write_offs_report'), state='*')

@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, InlineKeybo
 
 import models
 from . import buttons
-from utils.callback_data import prepopulated_period
+from utils.callback_data import last_n_days_period
 
 __all__ = (
     'UpdateStatisticsReportMarkup',
@@ -99,8 +99,8 @@ class PeriodsMarkup(InlineKeyboardMarkup):
     def __init__(self):
         super().__init__(row_width=1)
         self.add(
-            InlineKeyboardButton('последние 7 дней', callback_data=prepopulated_period.new(period='last-7-days')),
-            InlineKeyboardButton('последние 14 дней', callback_data=prepopulated_period.new(period='last-14-days')),
-            InlineKeyboardButton('последние 30 дней', callback_data=prepopulated_period.new(period='last-30-days')),
+            InlineKeyboardButton('последние 7 дней', callback_data=last_n_days_period.new(days_before_count=7)),
+            InlineKeyboardButton('последние 14 дней', callback_data=last_n_days_period.new(days_before_count=14)),
+            InlineKeyboardButton('последние 30 дней', callback_data=last_n_days_period.new(days_before_count=30)),
+            InlineKeyboardButton('последние 60 дней', callback_data=last_n_days_period.new(days_before_count=60)),
         )
-        self.row(InlineKeyboardButton('Другой период', callback_data='other-period'))
