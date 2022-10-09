@@ -17,6 +17,7 @@ bs4 = "^0.0.1"
 pytest-asyncio = "^0.19.0"
 loguru = "^0.6.0"
 dodo-lib-usbtypec1 = "^1.1.0"
+openpyxl = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
