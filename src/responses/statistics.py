@@ -235,3 +235,22 @@ class RestaurantCookingTime(Response):
             unit_name = abbreviate_unit_name(self.__unit_uuids_to_names[unit_uuid])
             lines.append(f'{unit_name} | <b>Ошибка</b>')
         return '\n'.join(lines)
+
+
+class ProductivityBalance(Response):
+
+    def __init__(self, report):
+        self.__report = report
+
+    def get_text(self) -> str:
+        lines = ['<b>Баланс эффективности:</b>']
+        for unit_report in self.__report.data:
+            stop_sale_duration = humanize_seconds(unit_report.stop_sale_duration)
+            lines.append(f'{unit_report.unit_name} | {unit_report.kitchen_performance}'
+                         f' | {unit_report.delivery_performance} | {stop_sale_duration}')
+        for error in self.__report.errors:
+            if error.message is None:
+                lines.append(f'{error.unit_name} | Ошибка')
+            else:
+                lines.append(f'{error.unit_name} | {error.message}')
+        return '\n'.join(lines)
