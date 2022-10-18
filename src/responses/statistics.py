@@ -1,3 +1,4 @@
+import uuid
 from typing import Iterable
 from uuid import UUID
 
@@ -239,18 +240,16 @@ class RestaurantCookingTime(Response):
 
 class ProductivityBalance(Response):
 
-    def __init__(self, report):
-        self.__report = report
+    def __init__(self, units_statistics: Iterable[models.UnitProductivityBalanceStatistics],
+                 unit_uuid_to_name: dict[uuid.UUID, str]):
+        self.__units_statistics = units_statistics
+        self.__unit_uuid_to_name = unit_uuid_to_name
 
     def get_text(self) -> str:
         lines = ['<b>Баланс эффективности:</b>']
-        for unit_report in self.__report.data:
-            stop_sale_duration = humanize_seconds(unit_report.stop_sale_duration)
-            lines.append(f'{unit_report.unit_name} | {unit_report.kitchen_performance}'
-                         f' | {unit_report.delivery_performance} | {stop_sale_duration}')
-        for error in self.__report.errors:
-            if error.message is None:
-                lines.append(f'{error.unit_name} | Ошибка')
-            else:
-                lines.append(f'{error.unit_name} | {error.message}')
+        for unit_report in self.__units_statistics:
+            stop_sale_duration = humanize_seconds(unit_report.stop_sale_duration_in_seconds)
+            unit_name = self.__unit_uuid_to_name[unit_report.unit_uuid]
+            lines.append(f'{unit_name} | {unit_report.sales_per_labor_hour}'
+                         f' | {unit_report.orders_per_labor_hour} | {stop_sale_duration}')
         return '\n'.join(lines)

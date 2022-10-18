@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 
 from aiogram.dispatcher.filters import Command
 from aiogram.types import Message, CallbackQuery
@@ -284,6 +285,28 @@ async def on_awaiting_orders_command(
     response = responses.HeatedShelfOrdersAndCouriersStatistics(
         heated_shelf_orders_and_couriers_statistics, units.id_to_name)
     await message.answer(**response.as_dict())
+
+
+@dp.message_handler(
+    Command(constants.StatisticsReportType.PRODUCTIVITY_BALANCE.name),
+    filters.UnitIdsRequiredFilter(),
+)
+async def on_productivity_balance_command(
+        message: Message,
+        units: UnitsConverter,
+        auth_client: AuthClient,
+        dodo_client: DodoAPIClient,
+):
+    accounts_tokens = await get_tokens_batch(auth_client, units.account_names)
+    tasks = (
+        dodo_client.get_productivity_balance_statistics(
+            account_tokens.access_token,
+            units.account_names_to_unit_uuids[account_tokens.account_name],
+        ) for account_tokens in accounts_tokens
+    )
+    tasks_responses = await asyncio.gather(*tasks)
+    flatten = tuple(itertools.chain.from_iterable(tasks_responses))
+    await message.answer(**responses.ProductivityBalance(flatten, units.uuids_to_names).as_dict())
 
 
 @dp.callback_query_handler(cd.show_statistics.filter())

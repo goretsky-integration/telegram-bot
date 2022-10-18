@@ -44,6 +44,7 @@ __all__ = (
     'DeliverySpeedStatistics',
     'BonusSystemStatistics',
     'BeingLateCertificatesStatistics',
+    'UnitProductivityBalanceStatistics',
 )
 
 
@@ -195,3 +196,10 @@ class UnitDeliverySpeed(BaseModel):
 class DeliverySpeedStatistics(BaseModel):
     units: list[UnitDeliverySpeed]
     error_unit_uuids: list[uuid.UUID]
+
+
+class UnitProductivityBalanceStatistics(BaseModel):
+    unit_uuid: uuid.UUID
+    sales_per_labor_hour: int
+    orders_per_labor_hour: float
+    stop_sale_duration_in_seconds: int
