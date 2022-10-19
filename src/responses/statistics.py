@@ -247,7 +247,10 @@ class ProductivityBalance(Response):
 
     def get_text(self) -> str:
         lines = ['<b>Баланс эффективности:</b>']
-        for unit_report in self.__units_statistics:
+        sorted_units_statistics = sorted(self.__units_statistics,
+                                         key=lambda unit_statistics: unit_statistics.sales_per_labor_hour,
+                                         reverse=True)
+        for unit_report in sorted_units_statistics:
             stop_sale_duration = humanize_seconds(unit_report.stop_sale_duration_in_seconds)
             unit_name = self.__unit_uuid_to_name[unit_report.unit_uuid]
             lines.append(f'{unit_name} | {unit_report.sales_per_labor_hour}'
