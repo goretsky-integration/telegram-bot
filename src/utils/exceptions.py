@@ -55,3 +55,7 @@ class NoCookiesError(AuthCredentialsAPIError):
 
 class NoTokenError(AuthCredentialsAPIError):
     pass
+
+
+class NoEnabledUnitsError(Exception):
+    pass
