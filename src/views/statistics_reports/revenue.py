@@ -23,7 +23,7 @@ class RevenueStatisticsView(BaseView):
             lines.append(f'{unit_name} | {intgaps(unit_revenue.today)}'
                          f' | {humanize_percents(unit_revenue.from_week_before_in_percents)}')
 
-        lines.append(f'<b>Итого: {intgaps(self.__revenue_statistics.results.total.today)}</b>'
-                     f' | {humanize_percents(self.__revenue_statistics.results.total.from_week_before_in_percents)}')
+        lines.append(f'<b>Итого: {intgaps(self.__revenue_statistics.results.total.today)}'
+                     f' | {humanize_percents(self.__revenue_statistics.results.total.from_week_before_in_percents)}</b>')
 
         return '\n'.join(lines)
