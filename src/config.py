@@ -1,15 +1,14 @@
 import pathlib
+from functools import lru_cache
 
 from dotenv import load_dotenv
 from pydantic import BaseSettings, Field
 
 __all__ = (
-    'app_settings',
     'ROOT_PATH',
     'LOG_FILE_PATH',
+    'get_app_settings',
 )
-
-load_dotenv()
 
 ROOT_PATH = pathlib.Path(__file__).parent.parent
 LOG_FILE_PATH = ROOT_PATH / 'logs.log'
@@ -22,4 +21,7 @@ class AppSettings(BaseSettings):
     debug: bool = Field(..., env='DEBUG')
 
 
-app_settings = AppSettings()
+@lru_cache
+def get_app_settings() -> AppSettings:
+    load_dotenv()
+    return AppSettings()
