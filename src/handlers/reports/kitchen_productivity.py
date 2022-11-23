@@ -6,7 +6,7 @@ from dodolib import models, AuthClient, DodoAPIClient, DatabaseClient
 from dodolib.utils.convert_models import UnitsConverter
 
 from models import Query
-from shortcuts import get_message, validate_reports, answer_views
+from shortcuts import get_message, validate_reports, answer_views, filter_units_by_ids
 from utils import logger
 from utils.callback_data import show_statistics
 from views import KitchenProductivityStatisticsView
@@ -27,7 +27,7 @@ async def on_kitchen_productivity_statistics_report(
         db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
     )
     validate_reports(reports)
-    units = UnitsConverter(units)
+    units = UnitsConverter(filter_units_by_ids(units, reports[0].unit_ids))
     tasks = (auth_client.get_cookies(account_name) for account_name in units.account_names)
     accounts_cookies = await asyncio.gather(*tasks)
     account_name_to_unit_ids = units.account_names_to_unit_ids

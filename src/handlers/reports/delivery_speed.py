@@ -7,7 +7,7 @@ from dodolib.utils.convert_models import UnitsConverter
 
 from models import Query
 from shortcuts import answer_views, validate_reports, get_message, get_accounts_tokens_batch, \
-    get_statistics_report_by_tokens_batch
+    get_statistics_report_by_tokens_batch, filter_units_by_ids
 from utils import logger
 from utils.callback_data import show_statistics
 from views import DeliverySpeedStatisticsView
@@ -28,7 +28,7 @@ async def on_delivery_speed_statistics_report(
         db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
     )
     validate_reports(reports)
-    units = UnitsConverter(units)
+    units = UnitsConverter(filter_units_by_ids(units, reports[0].unit_ids))
     accounts_tokens = await get_accounts_tokens_batch(auth_client, units.account_names)
     units_statistics = await get_statistics_report_by_tokens_batch(
         api_client.get_delivery_speed_statistics,

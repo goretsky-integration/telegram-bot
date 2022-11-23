@@ -3,7 +3,7 @@ import uuid
 from typing import TypeVar, Iterable, Sequence, Callable, Awaitable
 
 from aiogram.types import Message, CallbackQuery, Update
-from dodolib import models, AuthClient, DodoAPIClient
+from dodolib import models, AuthClient
 
 from utils import exceptions
 from views.base import BaseView
@@ -15,6 +15,7 @@ __all__ = (
     'validate_reports',
     'get_statistics_report_by_tokens_batch',
     'get_accounts_tokens_batch',
+    'filter_units_by_ids',
 )
 
 T = TypeVar('T')
@@ -73,3 +74,8 @@ async def get_statistics_report_by_tokens_batch(
     except Exception:
         raise exceptions.DodoAPIError
     return flatten(units_statistics)
+
+
+def filter_units_by_ids(units: Iterable[models.Unit], allowed_unit_ids: Iterable[int]) -> list[models.Unit]:
+    allowed_unit_ids = set(allowed_unit_ids)
+    return [unit for unit in units if unit.id in allowed_unit_ids]
