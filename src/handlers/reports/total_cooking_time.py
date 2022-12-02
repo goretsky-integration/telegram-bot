@@ -22,6 +22,7 @@ async def on_total_cooking_time_statistics_report(
 ):
     logger.debug('New report request')
     message = get_message(query)
+    report_message = await message.answer('Загрузка...')
     units, reports = await asyncio.gather(
         db_client.get_units(),
         db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
@@ -44,7 +45,7 @@ async def on_total_cooking_time_statistics_report(
         models.KitchenPartialStatisticsReport(results=units_kitchen_statistics, errors=error_unit_ids),
         units.ids_to_names,
     )
-    await answer_views(message, view)
+    await answer_views(report_message, view, edit=True)
 
 
 def register_handlers(dispatcher: Dispatcher):

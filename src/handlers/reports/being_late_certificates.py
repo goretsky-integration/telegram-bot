@@ -28,6 +28,7 @@ async def on_being_late_certificates_statistics_report(
 ):
     logger.debug('New report request')
     message = get_message(query)
+    report_message = await message.answer('Загрузка...')
     units, reports = await asyncio.gather(
         db_client.get_units(),
         db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
@@ -41,7 +42,7 @@ async def on_being_late_certificates_statistics_report(
         accounts_tokens,
     )
     view = BeingLateCertificatesStatisticsView(units_statistics, units.uuid_to_name())
-    await answer_views(message, view)
+    await answer_views(report_message, view, edit=True)
 
 
 def register_handlers(dispatcher: Dispatcher):

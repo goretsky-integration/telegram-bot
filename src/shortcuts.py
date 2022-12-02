@@ -21,9 +21,11 @@ __all__ = (
 T = TypeVar('T')
 
 
-async def answer_views(message: Message, *views: BaseView):
+async def answer_views(message: Message, *views: BaseView, edit: bool = False):
+    method = message.edit_text if edit else message.answer
     for view in views:
-        await message.answer(view.get_text(), reply_markup=view.get_reply_markup())
+        await method(view.get_text(), reply_markup=view.get_reply_markup())
+        await asyncio.sleep(0.1)
 
 
 def flatten(nested: Iterable[Iterable[T]]) -> list[T]:
