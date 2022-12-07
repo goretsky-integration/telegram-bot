@@ -6,7 +6,7 @@ from dodolib import DatabaseClient, AuthClient, DodoAPIClient
 from dodolib.utils.convert_models import UnitsConverter
 
 from models import Query
-from shortcuts import answer_views, validate_reports, get_message, flatten, filter_units_by_ids
+from shortcuts import answer_views, validate_reports, get_message, flatten, filter_units_by_ids, filter_exceptions
 from utils import logger
 from utils.callback_data import show_statistics
 from views import RestaurantCookingTimeStatisticsView
@@ -33,7 +33,8 @@ async def on_restaurant_cooking_time_statistics_report(
     tasks = (api_client.get_restaurant_cooking_time_statistics(account_tokens.access_token, 'ru',
                                                                account_name_to_unit_uuids[account_tokens.account_name])
              for account_tokens in accounts_tokens)
-    units_statistics = await asyncio.gather(*tasks)
+    units_statistics = await asyncio.gather(*tasks, return_exceptions=True)
+    units_statistics = filter_exceptions(units_statistics)
     view = RestaurantCookingTimeStatisticsView(flatten(units_statistics), units.uuid_to_name())
     await answer_views(report_message, view, edit=True)
 

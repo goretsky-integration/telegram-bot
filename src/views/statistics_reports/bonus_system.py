@@ -23,7 +23,7 @@ class BonusSystemStatisticsView(BaseView):
         )
 
         for unit in sorted_units_statistics:
-            unit_name = self.__unit_id_to_name[unit.unit_id]
+            unit_name = self.__unit_id_to_name[int(unit.unit_id)]
             lines.append(f'{unit_name} | {unit.orders_with_phone_numbers_percent}% из 100')
 
         return '\n'.join(lines)

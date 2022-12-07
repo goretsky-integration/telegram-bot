@@ -16,6 +16,7 @@ __all__ = (
     'get_statistics_report_by_tokens_batch',
     'get_accounts_tokens_batch',
     'filter_units_by_ids',
+    'filter_exceptions',
 )
 
 T = TypeVar('T')
@@ -71,13 +72,14 @@ async def get_statistics_report_by_tokens_batch(
                         'ru',
                         account_name_to_unit_uuids[account_tokens.account_name])
              for account_tokens in accounts_tokens)
-    try:
-        units_statistics = await asyncio.gather(*tasks)
-    except Exception:
-        raise exceptions.DodoAPIError
-    return flatten(units_statistics)
+    units_statistics = await asyncio.gather(*tasks, return_exceptions=True)
+    return flatten(filter_exceptions(units_statistics))
 
 
 def filter_units_by_ids(units: Iterable[models.Unit], allowed_unit_ids: Iterable[int]) -> list[models.Unit]:
     allowed_unit_ids = set(allowed_unit_ids)
     return [unit for unit in units if unit.id in allowed_unit_ids]
+
+
+def filter_exceptions(elements: Iterable[T | Exception]) -> list[T]:
+    return [element for element in elements if not isinstance(element, Exception)]
