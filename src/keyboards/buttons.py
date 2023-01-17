@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, KeyboardButton
 
-import models
+import models.api_responses.database as models
 from utils import callback_data
 
 __all__ = (
@@ -39,7 +39,7 @@ class UpdateStatisticsButton(InlineKeyboardButton):
 
 class ShowStatisticsButton(InlineKeyboardButton):
 
-    def __init__(self, statistics: models.StatisticsReportType):
+    def __init__(self, statistics: models.ReportType):
         super().__init__(
             text=statistics.verbose_name,
             callback_data=callback_data.show_statistics.new(report_type_name=statistics.name)

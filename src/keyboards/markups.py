@@ -2,8 +2,8 @@ from typing import Iterable
 
 from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, InlineKeyboardButton
 
-import models
-from . import buttons
+import models.api_responses.database as models
+from keyboards import buttons
 from utils.callback_data import last_n_days_period
 
 __all__ = (
@@ -38,7 +38,7 @@ class UpdateStatisticsReportMarkup(InlineKeyboardMarkup):
 
 class StatisticsReportsMarkup(InlineKeyboardMarkup):
 
-    def __init__(self, statistics_report_types: Iterable[models.StatisticsReportType]):
+    def __init__(self, statistics_report_types: Iterable[models.ReportType]):
         super().__init__(row_width=1)
         self.add(*(buttons.ShowStatisticsButton(statistics_type) for statistics_type in statistics_report_types))
 
