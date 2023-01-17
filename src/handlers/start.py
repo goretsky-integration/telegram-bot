@@ -1,22 +1,22 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text, Command, CommandStart
 from aiogram.types import Message
-from dodolib import DatabaseClient
 
+from services.database_api import DatabaseAPIService
 from shortcuts import answer_views
 from views import SettingsMenuView, StatisticsReportsMenuView, HideKeyboardView, ShowKeyboardView
 
 __all__ = ('register_handlers',)
 
 
-async def on_settings_button(message: Message, db_client: DatabaseClient):
-    report_types = await db_client.get_report_types()
+async def on_settings_button(message: Message, database_api_service: DatabaseAPIService):
+    report_types = await database_api_service.get_report_types()
     await answer_views(message, SettingsMenuView(report_types))
 
 
-async def on_statistics_reports_button(message: Message, db_client: DatabaseClient):
-    statistics_report_types = await db_client.get_statistics_report_types()
-    await answer_views(message, StatisticsReportsMenuView(statistics_report_types))
+async def on_statistics_reports_button(message: Message, database_api_service: DatabaseAPIService):
+    report_types = await database_api_service.get_statistics_report_types()
+    await answer_views(message, StatisticsReportsMenuView(report_types))
 
 
 async def on_hide_keyboard_command(message: Message):
