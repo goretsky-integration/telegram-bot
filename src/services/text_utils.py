@@ -1,32 +1,10 @@
 import pendulum
 
 __all__ = (
-    'humanize_percents',
     'humanize_seconds',
     'intgaps',
     'abbreviate_unit_name',
 )
-
-
-def humanize_percents(percent: int | float) -> str:
-    """Make percents more readable.
-
-    Examples:
-        >>> humanize_percents(54)
-        '+54%'
-        >>> humanize_percents(-4)
-        '-4%'
-        >>> humanize_percents(0)
-        '0%'
-
-    Args:
-        percent: Any number.
-
-    Returns:
-        Readable percent.
-    """
-    percent_sign = '+' if percent > 0 else ''
-    return f'{percent_sign}{percent}%'
 
 
 def intgaps(number: int | float) -> str:
@@ -106,4 +84,3 @@ def abbreviate_unit_name(department_name: str) -> str:
         if replaceable in department_name.lower():
             return department_name.lower().replace(replaceable, replace_to).lstrip()
     return department_name
-
