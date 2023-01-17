@@ -1,7 +1,8 @@
 from typing import Iterable
 
 from aiogram.types import InlineKeyboardMarkup
-from dodolib import models
+
+import models.api_responses.database as models
 
 from keyboards import UnitsMarkup, RegionsMarkup
 from views.base import BaseView

@@ -1,8 +1,8 @@
 from typing import Iterable
 
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, InlineKeyboardMarkup
-from dodolib import models
 
+import models.api_responses.database as models
 from keyboards import MainMenuMarkup, StatisticsReportsMarkup, SettingsMarkup
 from views.base import BaseView
 
@@ -34,7 +34,7 @@ class HideKeyboardView(BaseView):
 
 class StatisticsReportsMenuView(BaseView):
 
-    def __init__(self, statistics_report_types: Iterable[models.StatisticsReportType]):
+    def __init__(self, statistics_report_types: Iterable[models.ReportType]):
         self.statistics_report_types = statistics_report_types
 
     def get_text(self) -> str | None:
