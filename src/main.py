@@ -5,11 +5,10 @@ from aiogram.types import ParseMode, BotCommand
 
 import handlers
 from config import get_app_settings
-from middlewares import (
-    DependencyInjectMiddleware,
-)
+from middlewares import DependencyInjectMiddleware
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService
+from services.auth_api import AuthAPIService
 from services.http_client_factory import closing_http_client_factory
 
 
@@ -63,10 +62,17 @@ def main():
         ),
         country_code='ru',
     )
+    auth_api_service = AuthAPIService(
+        http_client_factory=functools.partial(
+            closing_http_client_factory,
+            base_url=app_settings.api_url,
+        )
+    )
     dp.setup_middleware(
         DependencyInjectMiddleware(
             dodo_api_service=dodo_api_service,
             database_api_service=database_api_service,
+            auth_api_service=auth_api_service,
         ),
     )
 
