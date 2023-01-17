@@ -1,3 +1,5 @@
+import functools
+
 from aiogram import executor, Bot, Dispatcher
 from aiogram.types import ParseMode, BotCommand
 
