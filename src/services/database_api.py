@@ -54,10 +54,11 @@ class DatabaseAPIService:
     async def add_report_route(
             self,
             *,
+            report_type: str,
             chat_id: int,
             unit_ids: Iterable[int],
     ) -> None:
-        request_body = {'report_type': 'STATISTICS', 'chat_id': chat_id, 'unit_ids': unit_ids}
+        request_body = {'report_type': report_type, 'chat_id': chat_id, 'unit_ids': unit_ids}
         async with self._http_client_factory() as client:
             response = await client.post('/reports/', json=request_body)
         if response.status_code != 200:
@@ -66,10 +67,11 @@ class DatabaseAPIService:
     async def remove_report_route(
             self,
             *,
+            report_type: str,
             chat_id: int,
             unit_ids: Iterable[int],
     ) -> None:
-        request_body = {'report_type': 'STATISTICS', 'chat_id': chat_id, 'unit_ids': unit_ids}
+        request_body = {'report_type': report_type, 'chat_id': chat_id, 'unit_ids': unit_ids}
         async with self._http_client_factory() as client:
             response = await client.request('DELETE', '/reports/', json=request_body)
         if response.status_code != 200:
