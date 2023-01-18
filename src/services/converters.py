@@ -16,7 +16,22 @@ __all__ = (
     'to_delivery_speed_statistics_view_dto',
     'to_late_delivery_vouchers_statistics_view_dto',
     'to_restaurant_cooking_time_statistics_view_dto',
+    'to_productivity_balance_statistics_view_dto',
 )
+
+
+def to_productivity_balance_statistics_view_dto(
+        units_productivity_balance_statistics: Iterable[api_models.UnitProductivityBalanceStatisticsReport],
+        unit_uuid_to_name: dict[UUID, str],
+) -> list[view_models.UnitProductivityBalanceStatisticsViewDTO]:
+    return [
+        view_models.UnitProductivityBalanceStatisticsViewDTO(
+            unit_name=unit_uuid_to_name[unit.unit_uuid],
+            stop_sale_duration_in_seconds=unit.stop_sale_duration_in_seconds,
+            sales_per_labor_hour=unit.sales_per_labor_hour,
+            orders_per_labor_hour=unit.orders_per_labor_hour,
+        ) for unit in units_productivity_balance_statistics
+    ]
 
 
 def to_restaurant_cooking_time_statistics_view_dto(
