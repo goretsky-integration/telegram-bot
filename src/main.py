@@ -65,7 +65,7 @@ def main():
     auth_api_service = AuthAPIService(
         http_client_factory=functools.partial(
             closing_http_client_factory,
-            base_url=app_settings.api_url,
+            base_url=app_settings.db_api_url,
         )
     )
     dp.setup_middleware(
