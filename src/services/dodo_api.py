@@ -3,6 +3,7 @@ from typing import Callable, Iterable, Any
 from uuid import UUID
 
 import httpx
+from pydantic import parse_obj_as
 
 import models.api_responses.auth as auth_models
 import models.api_responses.dodo as models
@@ -34,7 +35,7 @@ class DodoAPIService:
 
     async def __get_v2_statistics_report(self, *, resource: str, unit_uuids: Iterable[UUID], access_token: str):
         url = f'/v2/{self._country_code}/reports/{resource}'
-        request_query_params = {'unit_ids': tuple(unit_uuids)}
+        request_query_params = {'unit_uuids': tuple(unit_uuids)}
         request_headers = {'Authorization': f'Bearer {access_token}'}
         async with self._http_client_factory() as client:
             response = await client.get(url, params=request_query_params, headers=request_headers)
@@ -57,12 +58,18 @@ class DodoAPIService:
             access_token=access_token,
         )
 
-    async def get_delivery_speed_statistics_report(self, unit_uuids: Iterable[UUID], access_token: str):
-        return await self.__get_v2_statistics_report(
+    async def get_delivery_speed_statistics_report(
+            self,
+            *,
+            unit_uuids: Iterable[UUID],
+            access_token: str,
+    ) -> tuple[models.UnitDeliverySpeedStatisticsReport]:
+        response_data = await self.__get_v2_statistics_report(
             resource='delivery-speed',
             unit_uuids=unit_uuids,
             access_token=access_token,
         )
+        return parse_obj_as(tuple[models.UnitDeliverySpeedStatisticsReport, ...], response_data)
 
     async def get_heated_shelf_time_statistics_report(self, unit_uuids: Iterable[UUID], access_token: str):
         return await self.__get_v2_statistics_report(
@@ -164,7 +171,7 @@ async def get_v2_statistics_reports_batch(
     tasks = [
         api_method(
             unit_uuids=units_grouped_by_account_name[account_tokens.account_name].uuids,
-            access_tokens=account_tokens.access_token,
+            access_token=account_tokens.access_token,
         ) for account_tokens in accounts_tokens
     ]
     reports: tuple[Any, ...] = await asyncio.gather(*tasks)
