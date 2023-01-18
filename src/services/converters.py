@@ -19,7 +19,23 @@ __all__ = (
     'to_productivity_balance_statistics_view_dto',
     'to_delivery_productivity_statistics_view_dto',
     'to_total_cooking_time_statistics_view_dto',
+    'to_heated_shelf_time_statistics_view_dto',
 )
+
+
+def to_heated_shelf_time_statistics_view_dto(
+        heated_shelf_time_statistics: Iterable[api_models.UnitHeatedShelfTimeStatisticsReport],
+        trips_with_one_order_statistics: Iterable[api_models.UnitTripsWithOneOrderStatisticsReport],
+        unit_uuid_to_name: dict[UUID, str],
+) -> list[view_models.UnitHeatedShelfTimeStatisticsViewDTO]:
+    unit_name_to_percentage = {unit.unit_name: unit.percentage for unit in trips_with_one_order_statistics}
+    return [
+        view_models.UnitHeatedShelfTimeStatisticsViewDTO(
+            unit_name=unit_uuid_to_name[unit.unit_uuid],
+            average_heated_shelf_time_in_seconds=unit.average_heated_shelf_time,
+            trips_with_one_order_percentage=unit_name_to_percentage.get(unit_uuid_to_name[unit.unit_uuid], 0),
+        ) for unit in heated_shelf_time_statistics
+    ]
 
 
 def to_total_cooking_time_statistics_view_dto(
