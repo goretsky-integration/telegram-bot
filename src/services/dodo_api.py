@@ -97,12 +97,18 @@ class DodoAPIService:
         )
         return parse_obj_as(tuple[models.UnitRestaurantCookingTimeStatisticsReport, ...], response_data)
 
-    async def get_productivity_balance_statistics_report(self, unit_uuids: Iterable[UUID], access_token: str):
-        return await self.__get_v2_statistics_report(
+    async def get_productivity_balance_statistics_report(
+            self,
+            *,
+            unit_uuids: Iterable[UUID],
+            access_token: str,
+    ) -> tuple[models.UnitProductivityBalanceStatisticsReport, ...]:
+        response_data = await self.__get_v2_statistics_report(
             resource='productivity-balance',
             unit_uuids=unit_uuids,
             access_token=access_token,
         )
+        return parse_obj_as(tuple[models.UnitProductivityBalanceStatisticsReport, ...], response_data)
 
     async def __get_v1_statistics_report(self, *, resource: str, unit_ids: Iterable[int], cookies: dict):
         url = f'/v1/reports/{resource}'
