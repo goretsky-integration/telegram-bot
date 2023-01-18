@@ -16,6 +16,7 @@ __all__ = (
     'DodoAPIService',
     'get_v1_statistics_reports_batch',
     'get_v2_statistics_reports_batch',
+    'get_bonus_system_statistics_reports_batch',
 )
 
 
@@ -148,12 +149,20 @@ class DodoAPIService:
         )
         return parse_obj_as(tuple[models.UnitTripsWithOneOrderStatisticsReport, ...], response_data)
 
-    async def get_bonus_system_statistics_report(self, *, unit_ids: Iterable[int], cookies: dict):
-        return await self.__get_v1_statistics_report(
-            resource='bonus-system',
-            unit_ids=unit_ids,
-            cookies=cookies
-        )
+    async def get_bonus_system_statistics_report(
+            self,
+            *,
+            unit_ids_and_names: Iterable[dict],
+            cookies: dict,
+    ) -> tuple[models.UnitBonusSystemStatisticsReport, ...]:
+        url = f'/v1/reports/bonus-system'
+        request_body = {'cookies': cookies, 'units': tuple(unit_ids_and_names)}
+        async with self._http_client_factory() as client:
+            response = await client.post(url, json=request_body)
+        response_data = decode_response_json_or_raise_error(response)
+        if response.status_code != 200:
+            raise exceptions.DodoAPIServiceError
+        return parse_obj_as(tuple[models.UnitBonusSystemStatisticsReport, ...], response_data)
 
     async def get_kitchen_productivity_statistics_report(
             self,
@@ -196,6 +205,22 @@ async def get_v1_statistics_reports_batch(
     ]
     statistics_reports: tuple[Any, ...] = await asyncio.gather(*tasks)
     return statistics_reports
+
+
+async def get_bonus_system_statistics_reports_batch(
+        *,
+        dodo_api_service: DodoAPIService,
+        units_grouped_by_account_name: dict[str, UnitsConverter],
+        accounts_cookies: Iterable[auth_models.AccountCookies],
+) -> list[models.UnitBonusSystemStatisticsReport]:
+    tasks = [
+        dodo_api_service.get_bonus_system_statistics_report(
+            unit_ids_and_names=units_grouped_by_account_name[account_cookies.account_name].ids_and_names,
+            cookies=account_cookies.cookies,
+        ) for account_cookies in accounts_cookies
+    ]
+    statistics_reports: tuple[Any, ...] = await asyncio.gather(*tasks)
+    return flatten(statistics_reports)
 
 
 async def get_v2_statistics_reports_batch(
