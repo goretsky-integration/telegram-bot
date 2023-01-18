@@ -2,11 +2,13 @@ import asyncio
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
-from dodolib import models, AuthClient, DodoAPIClient, DatabaseClient
-from dodolib.utils.convert_models import UnitsConverter
 
 from models import Query
-from shortcuts import get_message, validate_reports, answer_views, filter_units_by_ids
+from services.converters import UnitsConverter, to_kitchen_productivity_statistics_view_dto
+from services.dodo_api import DodoAPIService, get_v1_statistics_reports_batch
+from services.database_api import DatabaseAPIService
+from services.auth_api import AuthAPIService, get_cookies_batch
+from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils import logger
 from utils.callback_data import show_statistics
 from views import KitchenProductivityStatisticsView
@@ -16,36 +18,30 @@ __all__ = ('register_handlers',)
 
 async def on_kitchen_productivity_statistics_report(
         query: Query,
-        api_client: DodoAPIClient,
-        auth_client: AuthClient,
-        db_client: DatabaseClient,
+        dodo_api_service: DodoAPIService,
+        database_api_service: DatabaseAPIService,
+        auth_api_service: AuthAPIService,
 ):
-    logger.debug('New report request')
+    logger.info('Kitchen productivity statistics report request')
     message = get_message(query)
-    report_message = await message.answer('Загрузка...')
-    units, reports = await asyncio.gather(
-        db_client.get_units(),
-        db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
+    report_message, units, report_routes = await asyncio.gather(
+        message.answer('Загрузка...'),
+        database_api_service.get_units(),
+        database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS')
     )
-    validate_reports(reports)
-    units = UnitsConverter(filter_units_by_ids(units, reports[0].unit_ids))
-    tasks = (auth_client.get_cookies(account_name) for account_name in units.account_names)
-    accounts_cookies = await asyncio.gather(*tasks)
-    account_name_to_unit_ids = units.account_names_to_unit_ids
-    tasks = (api_client.get_partial_kitchen_statistics(account_cookies.cookies,
-                                                       account_name_to_unit_ids[account_cookies.account_name])
-             for account_cookies in accounts_cookies)
-    partial_kitchen_statistics: tuple[models.KitchenPartialStatisticsReport, ...] = await asyncio.gather(*tasks)
-    units_kitchen_statistics = []
-    error_unit_ids = []
-    for unit in partial_kitchen_statistics:
-        units_kitchen_statistics += unit.results
-        error_unit_ids += unit.errors
-    view = KitchenProductivityStatisticsView(
-        models.KitchenPartialStatisticsReport(results=units_kitchen_statistics, errors=error_unit_ids),
-        units.ids_to_names,
+    enabled_units_in_current_chat = filter_units_by_ids(units, report_routes[0].unit_ids)
+
+    units = UnitsConverter(enabled_units_in_current_chat)
+    accounts_cookies = await get_cookies_batch(auth_api_service=auth_api_service, account_names=units.account_names)
+    reports = await get_v1_statistics_reports_batch(
+        api_method=dodo_api_service.get_kitchen_productivity_statistics_report,
+        accounts_cookies=accounts_cookies,
+        units_grouped_by_account_name=units.grouped_by_account_name,
     )
+    kitchen_productivity_statistics = to_kitchen_productivity_statistics_view_dto(reports, units.unit_id_to_name)
+    view = KitchenProductivityStatisticsView(kitchen_productivity_statistics)
     await answer_views(report_message, view, edit=True)
+    logger.info('Kitchen productivity statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):
