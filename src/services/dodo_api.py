@@ -112,12 +112,18 @@ class DodoAPIService:
             cookies=cookies
         )
 
-    async def get_kitchen_productivity_statistics_report(self, *, unit_ids: Iterable[int], cookies: dict):
-        return await self.__get_v1_statistics_report(
+    async def get_kitchen_productivity_statistics_report(
+            self,
+            *,
+            unit_ids: Iterable[int],
+            cookies: dict,
+    ) -> models.KitchenProductivityStatisticsReport:
+        response_data = await self.__get_v1_statistics_report(
             resource='kitchen-productivity',
             unit_ids=unit_ids,
             cookies=cookies
         )
+        return models.KitchenProductivityStatisticsReport.parse_obj(response_data)
 
     async def get_awaiting_orders_statistics_report(
             self,
