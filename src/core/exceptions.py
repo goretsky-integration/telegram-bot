@@ -1,3 +1,7 @@
+from typing import Iterable
+from uuid import UUID
+
+
 class ApplicationError(Exception):
     """Base exception class for the whole app."""
 
@@ -16,3 +20,11 @@ class DatabaseAPIServiceError(APIServiceError):
 
 class DodoAPIServiceError(APIServiceError):
     pass
+
+
+class AuthAPIServiceError(APIServiceError):
+
+    def __init__(self, *, account_name: str):
+        exception_message = f'Could not retrieve auth credentials for account "{account_name}"'
+        super().__init__(exception_message)
+        self.account_name = account_name
