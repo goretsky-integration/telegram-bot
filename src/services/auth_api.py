@@ -1,13 +1,13 @@
-from typing import Callable
+import asyncio
+from typing import Callable, Iterable
 
 import httpx
 
 import models.api_responses.auth as auth_models
-import models.api_responses.database as database_models
 from core import exceptions
 from services.api_responses import decode_response_json_or_raise_error
 
-__all__ = ('AuthAPIService',)
+__all__ = ('AuthAPIService', 'get_cookies_batch')
 
 
 class AuthAPIService:
@@ -22,7 +22,7 @@ class AuthAPIService:
             response = await client.get('/auth/token/', params=request_query_params)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
-            raise exceptions.AuthAPIServiceError(f'Could not retrieve tokens of account {account_name}')
+            raise exceptions.AuthAPIServiceError(account_name=account_name)
         return auth_models.AccountTokens.parse_obj(response_data)
 
     async def get_account_cookies(self, account_name: str) -> auth_models.AccountCookies:
@@ -31,5 +31,15 @@ class AuthAPIService:
             response = await client.get('/auth/cookies/', params=request_query_params)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
-            raise exceptions.AuthAPIServiceError(f'Could not retrieve cookies of account {account_name}')
-        return models.AccountCookies.parse_obj(response_data)
+            raise exceptions.AuthAPIServiceError(account_name=account_name)
+        return auth_models.AccountCookies.parse_obj(response_data)
+
+
+async def get_cookies_batch(
+        *,
+        auth_api_service: AuthAPIService,
+        account_names: Iterable[str],
+) -> tuple[auth_models.AccountCookies, ...]:
+    tasks = (auth_api_service.get_account_cookies(account_name) for account_name in account_names)
+    accounts_cookies: tuple[auth_models.AccountCookies, ...] = await asyncio.gather(*tasks)
+    return accounts_cookies
