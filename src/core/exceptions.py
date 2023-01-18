@@ -1,7 +1,3 @@
-from typing import Iterable
-from uuid import UUID
-
-
 class ApplicationError(Exception):
     """Base exception class for the whole app."""
 
@@ -28,3 +24,7 @@ class AuthAPIServiceError(APIServiceError):
         exception_message = f'Could not retrieve auth credentials for account "{account_name}"'
         super().__init__(exception_message)
         self.account_name = account_name
+
+
+class NoEnabledUnitsError(ApplicationError):
+    pass

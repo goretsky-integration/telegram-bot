@@ -3,11 +3,12 @@ import asyncio
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
 
+from core import exceptions
 from models import Query
 from services import converters
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService
-from shortcuts import get_message, answer_views
+from shortcuts import get_message, answer_views, validate_report_routes
 from utils import logger
 from utils.callback_data import show_statistics
 from views import RevenueStatisticsView
@@ -27,6 +28,7 @@ async def on_daily_revenue_statistics_report(
         database_api_service.get_units(),
         database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS'),
     )
+    validate_report_routes(report_routes)
     revenue_statistics = await dodo_api_service.get_revenue_statistics_report(report_routes[0].unit_ids)
     unit_id_to_name = {unit.id: unit.name for unit in units}
     revenue_statistics_view_dto = converters.to_revenue_statistics_view_dto(revenue_statistics, unit_id_to_name)

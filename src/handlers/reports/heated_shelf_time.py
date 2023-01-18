@@ -8,7 +8,7 @@ from services.auth_api import AuthAPIService, get_tokens_batch, get_cookies_batc
 from services.converters import UnitsConverter, to_heated_shelf_time_statistics_view_dto
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch, get_v1_statistics_reports_batch
-from shortcuts import answer_views, get_message, filter_units_by_ids, flatten
+from shortcuts import answer_views, get_message, filter_units_by_ids, flatten, validate_report_routes
 from utils import logger
 from utils.callback_data import show_statistics
 from views import HeatedShelfTimeStatisticsView
@@ -24,12 +24,13 @@ async def on_heated_shelf_time_statistics_report(
 ):
     logger.info('Heated shelf time statistics report request')
     message = get_message(query)
-    report_message, units, reports = await asyncio.gather(
+    report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
         database_api_service.get_units(),
         database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS'),
     )
-    units = UnitsConverter(filter_units_by_ids(units, reports[0].unit_ids))
+    validate_report_routes(report_routes)
+    units = UnitsConverter(filter_units_by_ids(units, report_routes[0].unit_ids))
     accounts_cookies, accounts_tokens = await asyncio.gather(
         get_cookies_batch(auth_api_service=auth_api_service, account_names=units.account_names),
         get_tokens_batch(auth_api_service=auth_api_service, account_names=units.account_names),

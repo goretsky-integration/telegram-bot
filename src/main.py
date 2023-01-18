@@ -34,6 +34,7 @@ async def setup_bot_commands(bot: Bot):
 
 
 def register_all_handlers(dispatcher: Dispatcher):
+    handlers.errors.register_handlers(dispatcher)
     handlers.start.register_handlers(dispatcher)
     handlers.settings.register_handlers(dispatcher)
     handlers.reports.register_handlers(dispatcher)

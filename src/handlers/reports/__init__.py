@@ -1,7 +1,6 @@
 from aiogram import Dispatcher
 
 from . import (
-    errors,
     total_cooking_time,
     restaurant_cooking_time,
     kitchen_productivity,
@@ -20,7 +19,6 @@ __all__ = ('register_handlers',)
 
 def register_handlers(dispatcher: Dispatcher):
     modules = (
-        errors,
         total_cooking_time,
         restaurant_cooking_time,
         kitchen_productivity,

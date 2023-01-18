@@ -8,7 +8,7 @@ from services.converters import UnitsConverter, to_kitchen_productivity_statisti
 from services.dodo_api import DodoAPIService, get_v1_statistics_reports_batch
 from services.database_api import DatabaseAPIService
 from services.auth_api import AuthAPIService, get_cookies_batch
-from shortcuts import answer_views, get_message, filter_units_by_ids
+from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
 from utils import logger
 from utils.callback_data import show_statistics
 from views import KitchenProductivityStatisticsView
@@ -29,6 +29,7 @@ async def on_kitchen_productivity_statistics_report(
         database_api_service.get_units(),
         database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS')
     )
+    validate_report_routes(report_routes)
     enabled_units_in_current_chat = filter_units_by_ids(units, report_routes[0].unit_ids)
 
     units = UnitsConverter(enabled_units_in_current_chat)
