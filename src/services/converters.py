@@ -55,3 +55,35 @@ def to_revenue_statistics_view_dto(
         ),
         error_unit_names=[unit_id_to_name[unit_id] for unit_id in revenue_statistics.errors]
     )
+
+
+@dataclass
+class UnitsConverter:
+    units: Iterable[database_models.Unit]
+
+    @functools.cached_property
+    def ids(self) -> set[int]:
+        return {unit.id for unit in self.units}
+
+    @functools.cached_property
+    def names(self) -> set[str]:
+        return {unit.name for unit in self.units}
+
+    @functools.cached_property
+    def uuids(self) -> set[UUID]:
+        return {unit.uuid for unit in self.units}
+
+    @functools.cached_property
+    def account_names(self) -> set[str]:
+        return {unit.account_name for unit in self.units}
+
+    @functools.cached_property
+    def unit_id_to_name(self) -> dict[int, str]:
+        return {unit.id: unit.name for unit in self.units}
+
+    @functools.cached_property
+    def grouped_by_account_name(self) -> dict[str, 'UnitsConverter']:
+        account_name_to_units = collections.defaultdict(list)
+        for unit in self.units:
+            account_name_to_units[unit.account_name].append(unit)
+        return {account_name: UnitsConverter(units) for account_name, units in account_name_to_units.items()}
