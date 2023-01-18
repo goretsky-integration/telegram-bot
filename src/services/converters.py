@@ -15,7 +15,20 @@ __all__ = (
     'to_kitchen_productivity_statistics_view_dto',
     'to_delivery_speed_statistics_view_dto',
     'to_late_delivery_vouchers_statistics_view_dto',
+    'to_restaurant_cooking_time_statistics_view_dto',
 )
+
+
+def to_restaurant_cooking_time_statistics_view_dto(
+        units_restaurant_cooking_time_statistics: Iterable[api_models.UnitRestaurantCookingTimeStatisticsReport],
+        unit_uuid_to_name: dict[UUID, str],
+) -> list[view_models.UnitRestaurantCookingTimeStatisticsViewDTO]:
+    return [
+        view_models.UnitRestaurantCookingTimeStatisticsViewDTO(
+            unit_name=unit_uuid_to_name[unit.unit_uuid],
+            average_tracking_pending_and_cooking_time=unit.average_tracking_pending_and_cooking_time,
+        ) for unit in units_restaurant_cooking_time_statistics
+    ]
 
 
 def to_late_delivery_vouchers_statistics_view_dto(
