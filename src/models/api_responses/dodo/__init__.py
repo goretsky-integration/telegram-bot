@@ -7,3 +7,4 @@ from .late_delivery_vouchers import *
 from .productivity_balance import *
 from .restaurant_cooking_time import *
 from .revenue import *
+from .trips_with_one_order import *
