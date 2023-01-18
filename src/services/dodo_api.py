@@ -135,12 +135,18 @@ class DodoAPIService:
             raise exceptions.DodoAPIServiceError
         return response_data
 
-    async def get_trips_with_one_order_statistics_report(self, *, unit_ids: Iterable[int], cookies: dict):
-        return await self.__get_v1_statistics_report(
+    async def get_trips_with_one_order_statistics_report(
+            self,
+            *,
+            unit_ids: Iterable[int],
+            cookies: dict,
+    ) -> tuple[models.UnitTripsWithOneOrderStatisticsReport, ...]:
+        response_data = await self.__get_v1_statistics_report(
             resource='trips-with-one-order',
             unit_ids=unit_ids,
             cookies=cookies
         )
+        return parse_obj_as(tuple[models.UnitTripsWithOneOrderStatisticsReport, ...], response_data)
 
     async def get_bonus_system_statistics_report(self, *, unit_ids: Iterable[int], cookies: dict):
         return await self.__get_v1_statistics_report(
