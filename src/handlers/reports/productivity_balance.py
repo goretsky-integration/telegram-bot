@@ -2,17 +2,13 @@ import asyncio
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
-from dodolib import DatabaseClient, AuthClient, DodoAPIClient
-from dodolib.utils.convert_models import UnitsConverter
 
 from models import Query
-from shortcuts import (
-    answer_views,
-    validate_reports,
-    get_message,
-    get_accounts_tokens_batch,
-    get_statistics_report_by_tokens_batch, filter_units_by_ids,
-)
+from services.auth_api import AuthAPIService, get_tokens_batch
+from services.converters import UnitsConverter, to_productivity_balance_statistics_view_dto
+from services.database_api import DatabaseAPIService
+from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
+from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils import logger
 from utils.callback_data import show_statistics
 from views import ProductivityBalanceStatisticsView
@@ -22,27 +18,28 @@ __all__ = ('register_handlers',)
 
 async def on_productivity_balance_statistics_report(
         query: Query,
-        api_client: DodoAPIClient,
-        auth_client: AuthClient,
-        db_client: DatabaseClient,
+        dodo_api_service: DodoAPIService,
+        database_api_service: DatabaseAPIService,
+        auth_api_service: AuthAPIService,
 ):
-    logger.debug('New report request')
+    logger.info('Productivity balance statistics report request')
     message = get_message(query)
-    report_message = await message.answer('Загрузка...')
-    units, reports = await asyncio.gather(
-        db_client.get_units(),
-        db_client.get_reports(chat_id=message.chat.id, report_type='STATISTICS'),
+    report_message, units, reports = await asyncio.gather(
+        message.answer('Загрузка...'),
+        database_api_service.get_units(),
+        database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS'),
     )
-    validate_reports(reports)
     units = UnitsConverter(filter_units_by_ids(units, reports[0].unit_ids))
-    accounts_tokens = await get_accounts_tokens_batch(auth_client, units.account_names)
-    units_statistics = await get_statistics_report_by_tokens_batch(
-        api_client.get_productivity_balance_statistics,
-        units.account_names_to_unit_uuids,
-        accounts_tokens,
+    accounts_tokens = await get_tokens_batch(auth_api_service=auth_api_service, account_names=units.account_names)
+    reports = await get_v2_statistics_reports_batch(
+        api_method=dodo_api_service.get_productivity_balance_statistics_report,
+        units_grouped_by_account_name=units.grouped_by_account_name,
+        accounts_tokens=accounts_tokens,
     )
-    view = ProductivityBalanceStatisticsView(units_statistics, units.uuid_to_name())
+    productivity_balance_statistics = to_productivity_balance_statistics_view_dto(reports, units.unit_uuid_to_name)
+    view = ProductivityBalanceStatisticsView(productivity_balance_statistics)
     await answer_views(report_message, view, edit=True)
+    logger.info('Productivity balance statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):
