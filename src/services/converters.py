@@ -18,7 +18,25 @@ __all__ = (
     'to_restaurant_cooking_time_statistics_view_dto',
     'to_productivity_balance_statistics_view_dto',
     'to_delivery_productivity_statistics_view_dto',
+    'to_total_cooking_time_statistics_view_dto',
 )
+
+
+def to_total_cooking_time_statistics_view_dto(
+        kitchen_productivity_statistics_group: Iterable[api_models.KitchenProductivityStatisticsReport],
+        unit_id_to_name: dict[int, str]
+) -> view_models.TotalCookingTimeStatisticsReportViewDTO:
+    units = []
+    error_unit_names = []
+    for kitchen_productivity_statistics in kitchen_productivity_statistics_group:
+        units += [
+            view_models.UnitTotalCookingTimeStatisticsDTO(
+                unit_name=unit_id_to_name[unit.unit_id],
+                total_cooking_time=unit.total_cooking_time,
+            ) for unit in kitchen_productivity_statistics.results
+        ]
+        error_unit_names += [unit_id_to_name[unit_id] for unit_id in kitchen_productivity_statistics.errors]
+    return view_models.TotalCookingTimeStatisticsReportViewDTO(units=units, error_unit_names=error_unit_names)
 
 
 def to_delivery_productivity_statistics_view_dto(
@@ -98,7 +116,6 @@ def to_kitchen_productivity_statistics_view_dto(
         units += [
             view_models.UnitKitchenProductivityStatisticsDTO(
                 unit_name=unit_id_to_name[unit.unit_id],
-                total_cooking_time=unit.total_cooking_time,
                 sales_per_labor_hour_today=unit.sales_per_labor_hour_today,
                 from_week_before_percent=unit.from_week_before_percent,
             ) for unit in kitchen_productivity_statistics.results
