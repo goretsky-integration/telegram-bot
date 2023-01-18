@@ -13,7 +13,23 @@ __all__ = (
     'UnitsConverter',
     'to_awaiting_orders_statistics_view_dto',
     'to_kitchen_productivity_statistics_view_dto',
+    'to_delivery_speed_statistics_view_dto',
 )
+
+
+def to_delivery_speed_statistics_view_dto(
+        units_delivery_speed_statistics: Iterable[api_models.UnitDeliverySpeedStatisticsReport],
+        unit_uuid_to_name: dict[UUID, str],
+) -> list[view_models.UnitDeliverySpeedStatisticsDTO]:
+    return [
+        view_models.UnitDeliverySpeedStatisticsDTO(
+            unit_name=unit_uuid_to_name[unit.unit_uuid],
+            average_delivery_order_fulfillment_time=unit.average_delivery_order_fulfillment_time,
+            average_cooking_time=unit.average_cooking_time,
+            average_order_trip_time=unit.average_order_trip_time,
+            average_heated_shelf_time=unit.average_heated_shelf_time,
+        ) for unit in units_delivery_speed_statistics
+    ]
 
 
 def to_kitchen_productivity_statistics_view_dto(
