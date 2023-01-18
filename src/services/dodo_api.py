@@ -44,12 +44,18 @@ class DodoAPIService:
             raise exceptions.DodoAPIServiceError
         return response_data
 
-    async def get_late_delivery_vouchers_statistics_report(self, unit_uuids: Iterable[UUID], access_token: str):
-        return await self.__get_v2_statistics_report(
+    async def get_late_delivery_vouchers_statistics_report(
+            self,
+            *,
+            unit_uuids: Iterable[UUID],
+            access_token: str,
+    ) -> tuple[models.UnitLateDeliveryVouchersStatisticsReport, ...]:
+        response_data = await self.__get_v2_statistics_report(
             resource='being-late-certificates',
             unit_uuids=unit_uuids,
             access_token=access_token,
         )
+        return parse_obj_as(tuple[models.UnitLateDeliveryVouchersStatisticsReport, ...], response_data)
 
     async def get_delivery_productivity_statistics_report(self, unit_uuids: Iterable[UUID], access_token: str):
         return await self.__get_v2_statistics_report(
