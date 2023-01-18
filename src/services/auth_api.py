@@ -7,7 +7,7 @@ import models.api_responses.auth as auth_models
 from core import exceptions
 from services.api_responses import decode_response_json_or_raise_error
 
-__all__ = ('AuthAPIService', 'get_cookies_batch')
+__all__ = ('AuthAPIService', 'get_cookies_batch', 'get_tokens_batch')
 
 
 class AuthAPIService:
@@ -43,3 +43,13 @@ async def get_cookies_batch(
     tasks = (auth_api_service.get_account_cookies(account_name) for account_name in account_names)
     accounts_cookies: tuple[auth_models.AccountCookies, ...] = await asyncio.gather(*tasks)
     return accounts_cookies
+
+
+async def get_tokens_batch(
+        *,
+        auth_api_service: AuthAPIService,
+        account_names: Iterable[str],
+) -> tuple[auth_models.AccountTokens]:
+    tasks = (auth_api_service.get_account_tokens(account_name) for account_name in account_names)
+    account_tokens: tuple[auth_models.AccountTokens] = await asyncio.gather(*tasks)
+    return account_tokens
