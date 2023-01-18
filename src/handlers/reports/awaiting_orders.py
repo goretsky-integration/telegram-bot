@@ -22,7 +22,7 @@ async def on_awaiting_orders_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.debug('New report request')
+    logger.info('Awaiting orders statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -41,6 +41,7 @@ async def on_awaiting_orders_statistics_report(
     awaiting_orders_statistics = to_awaiting_orders_statistics_view_dto(reports, units.unit_id_to_name)
     view = AwaitingOrdersStatisticsView(awaiting_orders_statistics=awaiting_orders_statistics)
     await answer_views(report_message, view, edit=True)
+    logger.info('Awaiting orders statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):
