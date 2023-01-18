@@ -1,8 +1,6 @@
-import uuid
 from typing import Iterable
 
-from dodolib import models
-
+import models.report_views.heated_shelf_time as models
 from services.text_utils import humanize_seconds
 from views.base import BaseView
 
@@ -10,21 +8,19 @@ __all__ = ('HeatedShelfTimeStatisticsView',)
 
 
 class HeatedShelfTimeStatisticsView(BaseView):
-    __slots__ = ('__units_heated_shelf_time_statistics', '__unit_uuid_to_name')
+    __slots__ = ('__units_statistics',)
 
-    def __init__(self, units_heated_shelf_time_statistics: Iterable[models.UnitHeatedShelfStatistics],
-                 unit_uuid_to_name: dict[uuid.UUID, str]):
-        self.__units_heated_shelf_time_statistics = units_heated_shelf_time_statistics
-        self.__unit_uuid_to_name = unit_uuid_to_name
+    def __init__(self, heated_shelf_time_statistics: Iterable[models.UnitHeatedShelfTimeStatisticsViewDTO]):
+        self.__units = sorted(heated_shelf_time_statistics,
+                              reverse=True,
+                              key=lambda unit_statistics: unit_statistics.average_heated_shelf_time_in_seconds)
 
     def get_text(self) -> str:
         lines = ['<b>Время ожидания на полке</b>']
-        sorted_units_statistics = sorted(self.__units_heated_shelf_time_statistics,
-                                         reverse=True,
-                                         key=lambda unit: unit.average_heated_shelf_time)
-
-        for unit in sorted_units_statistics:
-            unit_name = self.__unit_uuid_to_name[unit.unit_uuid]
-            lines.append(f'{unit_name} | {humanize_seconds(unit.average_heated_shelf_time)}')
-
+        lines += [
+            f'{unit_statistics.unit_name}'
+            f' | {humanize_seconds(unit_statistics.average_heated_shelf_time_in_seconds)}'
+            f' | {unit_statistics.trips_with_one_order_percentage:g}%'
+            for unit_statistics in self.__units_statistics
+        ]
         return '\n'.join(lines)
