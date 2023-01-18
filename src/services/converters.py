@@ -121,6 +121,10 @@ class UnitsConverter:
         return {unit.id: unit.name for unit in self.units}
 
     @functools.cached_property
+    def unit_uuid_to_name(self) -> dict[UUID, str]:
+        return {unit.uuid: unit.name for unit in self.units}
+
+    @functools.cached_property
     def grouped_by_account_name(self) -> dict[str, 'UnitsConverter']:
         account_name_to_units = collections.defaultdict(list)
         for unit in self.units:
