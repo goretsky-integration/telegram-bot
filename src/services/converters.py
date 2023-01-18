@@ -12,7 +12,30 @@ __all__ = (
     'to_revenue_statistics_view_dto',
     'UnitsConverter',
     'to_awaiting_orders_statistics_view_dto',
+    'to_kitchen_productivity_statistics_view_dto',
 )
+
+
+def to_kitchen_productivity_statistics_view_dto(
+        kitchen_productivity_statistics_group: Iterable[api_models.KitchenProductivityStatisticsReport],
+        unit_id_to_name: dict[int, str]
+) -> view_models.KitchenProductivityStatisticsReportViewDTO:
+    units = []
+    error_unit_names = []
+    for kitchen_productivity_statistics in kitchen_productivity_statistics_group:
+        units += [
+            view_models.UnitKitchenProductivityStatisticsDTO(
+                unit_name=unit_id_to_name[unit.unit_id],
+                total_cooking_time=unit.total_cooking_time,
+                sales_per_labor_hour_today=unit.sales_per_labor_hour_today,
+                from_week_before_percent=unit.from_week_before_percent,
+            ) for unit in kitchen_productivity_statistics.results
+        ]
+        error_unit_names += [unit_id_to_name[unit_id] for unit_id in kitchen_productivity_statistics.errors]
+    return view_models.KitchenProductivityStatisticsReportViewDTO(
+        units=units,
+        error_unit_names=error_unit_names,
+    )
 
 
 def to_awaiting_orders_statistics_view_dto(
