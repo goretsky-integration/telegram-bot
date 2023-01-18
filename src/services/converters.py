@@ -20,7 +20,20 @@ __all__ = (
     'to_delivery_productivity_statistics_view_dto',
     'to_total_cooking_time_statistics_view_dto',
     'to_heated_shelf_time_statistics_view_dto',
+    'to_bonus_system_statistics_view_dto',
 )
+
+
+def to_bonus_system_statistics_view_dto(
+        bonus_system_statistics: Iterable[api_models.UnitBonusSystemStatisticsReport],
+        unit_id_to_name: dict[int, str],
+) -> list[view_models.UnitBonusSystemStatisticsViewDTO]:
+    return [
+        view_models.UnitBonusSystemStatisticsViewDTO(
+            unit_name=unit_id_to_name[unit.unit_id],
+            orders_with_phone_numbers_percent=unit.orders_with_phone_numbers_percent,
+        ) for unit in bonus_system_statistics
+    ]
 
 
 def to_heated_shelf_time_statistics_view_dto(
@@ -196,6 +209,10 @@ class UnitsConverter:
     @functools.cached_property
     def names(self) -> set[str]:
         return {unit.name for unit in self.units}
+
+    @functools.cached_property
+    def ids_and_names(self) -> list[dict]:
+        return [{'id': unit.id, 'name': unit.name} for unit in self.units]
 
     @functools.cached_property
     def uuids(self) -> set[UUID]:
