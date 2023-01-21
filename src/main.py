@@ -1,4 +1,5 @@
 import functools
+import logging
 import pathlib
 
 from aiogram import executor, Bot, Dispatcher
@@ -46,9 +47,17 @@ async def on_startup(dispatcher: Dispatcher):
     await setup_bot_commands(dispatcher.bot)
 
 
+def setup_logging(*, logfile_path: str | pathlib.Path, debug: bool) -> None:
+    loglevel = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(filename=logfile_path, level=loglevel)
+
+
 def main():
     config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
     config = load_config(config_file_path)
+
+    setup_logging(logfile_path=config.logfile_path, debug=config.debug)
+
     bot = Bot(config.bot_token, parse_mode=ParseMode.HTML)
     dp = Dispatcher(bot)
 
