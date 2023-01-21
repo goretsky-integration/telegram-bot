@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
@@ -9,7 +10,6 @@ from services.converters import UnitsConverter, to_restaurant_cooking_time_stati
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
 from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import RestaurantCookingTimeStatisticsView
 
@@ -20,7 +20,7 @@ async def on_restaurant_cooking_time_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.info('Restaurant cooking time statistics report request')
+    logging.info('Restaurant cooking time statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -38,7 +38,7 @@ async def on_restaurant_cooking_time_statistics_report(
     units_delivery_speed_statistics = to_restaurant_cooking_time_statistics_view_dto(reports, units.unit_uuid_to_name)
     view = RestaurantCookingTimeStatisticsView(units_delivery_speed_statistics)
     await answer_views(report_message, view, edit=True)
-    logger.info('Restaurant cooking time statistics report sent')
+    logging.info('Restaurant cooking time statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):
