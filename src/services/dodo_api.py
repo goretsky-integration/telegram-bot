@@ -125,12 +125,9 @@ class DodoAPIService:
 
     async def __get_v1_statistics_report(self, *, resource: str, unit_ids: Iterable[int], cookies: dict):
         url = f'/v1/reports/{resource}'
-        request_body = {
-            'cookies': cookies,
-            'unit_ids': tuple(unit_ids),
-        }
+        request_query_params = {'unit_ids': tuple(unit_ids)}
         async with self._http_client_factory() as client:
-            response = await client.post(url, json=request_body)
+            response = await client.get(url, cookies=cookies, params=request_query_params)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DodoAPIServiceError
