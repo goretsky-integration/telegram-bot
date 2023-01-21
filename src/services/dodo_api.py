@@ -196,15 +196,15 @@ async def get_v1_statistics_reports_batch(
         api_method: Callable,
         units_grouped_by_account_name: dict[str, UnitsConverter],
         accounts_cookies: Iterable[auth_models.AccountCookies],
-) -> tuple[Any, ...]:
-    tasks = [
-        api_method(
-            unit_ids=units_grouped_by_account_name[account_cookies.account_name].ids,
-            cookies=account_cookies.cookies,
-        ) for account_cookies in accounts_cookies
-    ]
-    statistics_reports: tuple[Any, ...] = await asyncio.gather(*tasks)
-    return statistics_reports
+) -> list[Any]:
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [
+            task_group.create_task(api_method(
+                unit_ids=units_grouped_by_account_name[account_cookies.account_name].ids,
+                cookies=account_cookies.cookies,
+            )) for account_cookies in accounts_cookies
+        ]
+    return [task.result() for task in tasks]
 
 
 async def get_bonus_system_statistics_reports_batch(
@@ -213,14 +213,14 @@ async def get_bonus_system_statistics_reports_batch(
         units_grouped_by_account_name: dict[str, UnitsConverter],
         accounts_cookies: Iterable[auth_models.AccountCookies],
 ) -> list[models.UnitBonusSystemStatisticsReport]:
-    tasks = [
-        dodo_api_service.get_bonus_system_statistics_report(
-            unit_ids_and_names=units_grouped_by_account_name[account_cookies.account_name].ids_and_names,
-            cookies=account_cookies.cookies,
-        ) for account_cookies in accounts_cookies
-    ]
-    statistics_reports: tuple[Any, ...] = await asyncio.gather(*tasks)
-    return flatten(statistics_reports)
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [
+            task_group.create_task(dodo_api_service.get_bonus_system_statistics_report(
+                unit_ids_and_names=units_grouped_by_account_name[account_cookies.account_name].ids_and_names,
+                cookies=account_cookies.cookies,
+            )) for account_cookies in accounts_cookies
+        ]
+    return [result for task in tasks for result in task.result()]
 
 
 async def get_v2_statistics_reports_batch(
@@ -229,11 +229,11 @@ async def get_v2_statistics_reports_batch(
         units_grouped_by_account_name: dict[str, UnitsConverter],
         accounts_tokens: Iterable[auth_models.AccountTokens],
 ):
-    tasks = [
-        api_method(
-            unit_uuids=units_grouped_by_account_name[account_tokens.account_name].uuids,
-            access_token=account_tokens.access_token,
-        ) for account_tokens in accounts_tokens
-    ]
-    reports: tuple[Any, ...] = await asyncio.gather(*tasks)
-    return flatten(reports)
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [
+            task_group.create_task(api_method(
+                unit_uuids=units_grouped_by_account_name[account_tokens.account_name].uuids,
+                access_token=account_tokens.access_token,
+            )) for account_tokens in accounts_tokens
+        ]
+    return [result for task in tasks for result in task.result()]

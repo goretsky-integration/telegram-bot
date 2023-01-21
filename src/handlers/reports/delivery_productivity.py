@@ -1,5 +1,6 @@
 import asyncio
 
+import logging
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
 
@@ -9,7 +10,6 @@ from services.converters import UnitsConverter, to_delivery_productivity_statist
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
 from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import DeliveryProductivityStatisticsView
 
@@ -22,7 +22,7 @@ async def on_delivery_productivity_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.info('Delivery productivity statistics report request')
+    logging.info('Delivery productivity statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -40,7 +40,7 @@ async def on_delivery_productivity_statistics_report(
     units_delivery_speed_statistics = to_delivery_productivity_statistics_view_dto(reports, units.unit_uuid_to_name)
     view = DeliveryProductivityStatisticsView(units_delivery_speed_statistics)
     await answer_views(report_message, view, edit=True)
-    logger.info('Delivery productivity statistics report sent')
+    logging.info('Delivery productivity statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):

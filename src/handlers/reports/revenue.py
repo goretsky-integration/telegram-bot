@@ -1,15 +1,14 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
 
-from core import exceptions
 from models import Query
 from services import converters
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService
 from shortcuts import get_message, answer_views, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import RevenueStatisticsView
 
@@ -21,7 +20,7 @@ async def on_daily_revenue_statistics_report(
         dodo_api_service: DodoAPIService,
         database_api_service: DatabaseAPIService,
 ) -> None:
-    logger.info('Revenue statistics report request')
+    logging.info('Revenue statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -34,7 +33,7 @@ async def on_daily_revenue_statistics_report(
     revenue_statistics_view_dto = converters.to_revenue_statistics_view_dto(revenue_statistics, unit_id_to_name)
     view = RevenueStatisticsView(revenue_statistics_view_dto)
     await answer_views(report_message, view, edit=True)
-    logger.info('Revenue statistics report sent')
+    logging.info('Revenue statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):

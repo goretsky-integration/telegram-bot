@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
@@ -9,7 +10,6 @@ from services.dodo_api import DodoAPIService, get_v1_statistics_reports_batch
 from services.database_api import DatabaseAPIService
 from services.auth_api import AuthAPIService, get_cookies_batch
 from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import KitchenProductivityStatisticsView
 
@@ -22,7 +22,7 @@ async def on_kitchen_productivity_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.info('Kitchen productivity statistics report request')
+    logging.info('Kitchen productivity statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -42,7 +42,7 @@ async def on_kitchen_productivity_statistics_report(
     kitchen_productivity_statistics = to_kitchen_productivity_statistics_view_dto(reports, units.unit_id_to_name)
     view = KitchenProductivityStatisticsView(kitchen_productivity_statistics)
     await answer_views(report_message, view, edit=True)
-    logger.info('Kitchen productivity statistics report sent')
+    logging.info('Kitchen productivity statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):

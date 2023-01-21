@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
@@ -9,7 +10,6 @@ from services.converters import UnitsConverter, to_late_delivery_vouchers_statis
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
 from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import BeingLateCertificatesStatisticsView
 
@@ -22,7 +22,7 @@ async def on_being_late_certificates_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.debug('New report request')
+    logging.debug('New report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),

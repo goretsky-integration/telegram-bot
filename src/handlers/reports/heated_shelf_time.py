@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
@@ -9,7 +10,6 @@ from services.converters import UnitsConverter, to_heated_shelf_time_statistics_
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch, get_v1_statistics_reports_batch
 from shortcuts import answer_views, get_message, filter_units_by_ids, flatten, validate_report_routes
-from utils import logger
 from utils.callback_data import show_statistics
 from views import HeatedShelfTimeStatisticsView
 
@@ -22,7 +22,7 @@ async def on_heated_shelf_time_statistics_report(
         database_api_service: DatabaseAPIService,
         auth_api_service: AuthAPIService,
 ):
-    logger.info('Heated shelf time statistics report request')
+    logging.info('Heated shelf time statistics report request')
     message = get_message(query)
     report_message, units, report_routes = await asyncio.gather(
         message.answer('Загрузка...'),
@@ -54,7 +54,7 @@ async def on_heated_shelf_time_statistics_report(
     )
     view = HeatedShelfTimeStatisticsView(units_heated_shelf_time_statistics)
     await answer_views(report_message, view, edit=True)
-    logger.info('Heated shelf time statistics report sent')
+    logging.info('Heated shelf time statistics report sent')
 
 
 def register_handlers(dispatcher: Dispatcher):
