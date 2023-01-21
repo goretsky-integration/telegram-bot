@@ -1,0 +1,7 @@
+[app]
+debug = false
+telegram_bot_token = "your token"
+
+[api]
+dodo_api_url = ""
+database_api_url = ""

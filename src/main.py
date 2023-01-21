@@ -1,10 +1,11 @@
 import functools
+import pathlib
 
 from aiogram import executor, Bot, Dispatcher
 from aiogram.types import ParseMode, BotCommand
 
 import handlers
-from config import get_app_settings
+from config import load_config
 from middlewares import DependencyInjectMiddleware
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService
@@ -46,27 +47,28 @@ async def on_startup(dispatcher: Dispatcher):
 
 
 def main():
-    app_settings = get_app_settings()
-    bot = Bot(app_settings.bot_token, parse_mode=ParseMode.HTML)
+    config_file_path = pathlib.Path(__file__).parent.parent / 'config.toml'
+    config = load_config(config_file_path)
+    bot = Bot(config.bot_token, parse_mode=ParseMode.HTML)
     dp = Dispatcher(bot)
 
     database_api_service = DatabaseAPIService(
         http_client_factory=functools.partial(
             closing_http_client_factory,
-            base_url=app_settings.db_api_url,
+            base_url=config.db_api_url,
         ),
     )
     dodo_api_service = DodoAPIService(
         http_client_factory=functools.partial(
             closing_http_client_factory,
-            base_url=app_settings.api_url,
+            base_url=config.api_url,
         ),
         country_code='ru',
     )
     auth_api_service = AuthAPIService(
         http_client_factory=functools.partial(
             closing_http_client_factory,
-            base_url=app_settings.db_api_url,
+            base_url=config.db_api_url,
         )
     )
     dp.setup_middleware(
