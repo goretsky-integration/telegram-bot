@@ -39,17 +39,19 @@ async def get_cookies_batch(
         *,
         auth_api_service: AuthAPIService,
         account_names: Iterable[str],
-) -> tuple[auth_models.AccountCookies, ...]:
-    tasks = (auth_api_service.get_account_cookies(account_name) for account_name in account_names)
-    accounts_cookies: tuple[auth_models.AccountCookies, ...] = await asyncio.gather(*tasks)
-    return accounts_cookies
+) -> list[auth_models.AccountCookies]:
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [task_group.create_task(auth_api_service.get_account_cookies(account_name))
+                 for account_name in account_names]
+    return [task.result() for task in tasks]
 
 
 async def get_tokens_batch(
         *,
         auth_api_service: AuthAPIService,
         account_names: Iterable[str],
-) -> tuple[auth_models.AccountTokens]:
-    tasks = (auth_api_service.get_account_tokens(account_name) for account_name in account_names)
-    account_tokens: tuple[auth_models.AccountTokens] = await asyncio.gather(*tasks)
-    return account_tokens
+) -> list[auth_models.AccountTokens]:
+    async with asyncio.TaskGroup() as task_group:
+        tasks = [task_group.create_task(auth_api_service.get_account_tokens(account_name))
+                 for account_name in account_names]
+    return [task.result() for task in tasks]
