@@ -1,5 +1,3 @@
-import pendulum
-
 __all__ = (
     'humanize_seconds',
     'intgaps',
@@ -47,11 +45,13 @@ def humanize_seconds(seconds: int) -> str:
     """
     if seconds > 359999:
         return '+99:59:59'
-    duration = pendulum.Duration(seconds=seconds)
-    hours = duration.hours + duration.days * 24
+    minutes = seconds // 60
+    seconds %= 60
+    hours = minutes // 60
+    minutes %= 60
     if not hours:
-        return f'{duration.minutes:02}:{duration.remaining_seconds:02}'
-    return f'{hours:02}:{duration.minutes:02}:{duration.remaining_seconds:02}'
+        return f'{minutes:02}:{seconds:02}'
+    return f'{hours:02}:{minutes:02}:{seconds:02}'
 
 
 def abbreviate_unit_name(department_name: str) -> str:
