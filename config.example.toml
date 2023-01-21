@@ -1,4 +1,5 @@
 [app]
+logfile_path = ""  # optional
 debug = false
 telegram_bot_token = "your token"
 

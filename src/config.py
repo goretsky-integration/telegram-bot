@@ -2,15 +2,7 @@ import tomllib
 import pathlib
 from dataclasses import dataclass
 
-from pydantic import BaseSettings, Field
-
-__all__ = (
-    'ROOT_PATH',
-    'LOG_FILE_PATH',
-)
-
-ROOT_PATH = pathlib.Path(__file__).parent.parent
-LOG_FILE_PATH = ROOT_PATH / 'logs.log'
+__all__ = ('Config', 'load_config')
 
 
 @dataclass(frozen=True, slots=True)
