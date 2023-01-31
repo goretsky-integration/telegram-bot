@@ -49,7 +49,7 @@ class DatabaseAPIService:
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DatabaseAPIServiceError('Could not retrieve report routes from database api.')
-        return parse_obj_as(tuple[models.ReportRoute], response_data)
+        return parse_obj_as(tuple[models.ReportRoute, ...], response_data)
 
     async def add_report_route(
             self,
