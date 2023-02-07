@@ -10,7 +10,6 @@ import models.api_responses.dodo as models
 from core import exceptions
 from services.api_responses import decode_response_json_or_raise_error
 from services.converters import UnitsConverter
-from shortcuts import flatten
 
 __all__ = (
     'DodoAPIService',
@@ -124,7 +123,7 @@ class DodoAPIService:
         return parse_obj_as(tuple[models.UnitProductivityBalanceStatisticsReport, ...], response_data)
 
     async def __get_v1_statistics_report(self, *, resource: str, unit_ids: Iterable[int], cookies: dict):
-        url = f'/v1/reports/{resource}'
+        url = f'/v1/{self._country_code}/reports/{resource}'
         request_query_params = {'unit_ids': tuple(unit_ids)}
         async with self._http_client_factory() as client:
             response = await client.get(url, cookies=cookies, params=request_query_params)
@@ -152,10 +151,10 @@ class DodoAPIService:
             unit_ids_and_names: Iterable[dict],
             cookies: dict,
     ) -> tuple[models.UnitBonusSystemStatisticsReport, ...]:
-        url = f'/v1/reports/bonus-system'
-        request_body = {'cookies': cookies, 'units': tuple(unit_ids_and_names)}
+        url = f'/v1/{self._country_code}/reports/bonus-system'
+        request_body = tuple(unit_ids_and_names)
         async with self._http_client_factory() as client:
-            response = await client.post(url, json=request_body)
+            response = await client.post(url, cookies=cookies, json=request_body)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DodoAPIServiceError
