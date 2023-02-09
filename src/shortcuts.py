@@ -13,6 +13,7 @@ __all__ = (
     'get_message',
     'validate_report_routes',
     'filter_units_by_ids',
+    'edit_message_by_view',
 )
 
 T = TypeVar('T')
@@ -23,6 +24,10 @@ async def answer_views(message: Message, *views: BaseView, edit: bool = False):
     for view in views:
         await method(view.get_text(), reply_markup=view.get_reply_markup())
         await asyncio.sleep(0.1)
+
+
+async def edit_message_by_view(message: Message, view: BaseView) -> Message:
+    return await message.edit_text(text=view.get_text(), reply_markup=view.get_reply_markup())
 
 
 def flatten(nested: Iterable[Iterable[T]]) -> list[T]:
