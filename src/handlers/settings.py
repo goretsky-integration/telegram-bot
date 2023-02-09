@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery
 
 import models
 from services.database_api import DatabaseAPIService
-from shortcuts import answer_views
+from shortcuts import answer_views, edit_message_by_view
 from utils import callback_data as cd
 
 __all__ = ('register_handlers',)
@@ -42,7 +42,7 @@ async def on_switch_all_unit_statuses_button(
     enabled_unit_ids = [unit_id for report in enabled_reports for unit_id in report.unit_ids]
     enabled_unit_ids_by_region = set(unit_ids_by_region) & set(enabled_unit_ids)
     response = UnitsResponseView(report_type, region, enabled_unit_ids_by_region, units_by_region)
-    await answer_views(callback_query.message, response)
+    await edit_message_by_view(callback_query.message, response)
     await callback_query.answer()
 
 
@@ -51,6 +51,7 @@ async def on_switch_unit_statis_button(
         callback_data: models.SwitchUnitStatusCallbackData,
         database_api_service: DatabaseAPIService,
 ):
+    await callback_query.answer()
     is_unit_enabled = bool(int(callback_data['is_unit_enabled']))
     unit_id = int(callback_data['unit_id'])
     report_type = callback_data['report_type']
@@ -77,7 +78,7 @@ async def on_switch_unit_statis_button(
     enabled_unit_ids = [unit_id for report in enabled_reports for unit_id in report.unit_ids]
     enabled_unit_ids_by_region = unit_ids_by_region & set(enabled_unit_ids)
     response = UnitsResponseView(report_type, region, enabled_unit_ids_by_region, units_by_region)
-    await answer_views(callback_query.message, response)
+    await edit_message_by_view(callback_query.message, response)
 
 
 async def on_region_units_button(
@@ -92,7 +93,7 @@ async def on_region_units_button(
                                                                   chat_id=callback_query.message.chat.id)
     enabled_unit_ids = [unit_id for report in enabled_units for unit_id in report.unit_ids]
     response = UnitsResponseView(report_type, region, enabled_unit_ids, all_units)
-    await answer_views(callback_query.message, response)
+    await edit_message_by_view(callback_query.message, response)
     await callback_query.answer()
 
 
