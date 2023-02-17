@@ -71,9 +71,9 @@ class DatabaseAPIService:
             chat_id: int,
             unit_ids: Iterable[int],
     ) -> None:
-        request_body = {'report_type': report_type, 'chat_id': chat_id, 'unit_ids': unit_ids}
+        request_params = {'report_type': report_type, 'chat_id': chat_id, 'unit_ids': unit_ids}
         async with self._http_client_factory() as client:
-            response = await client.request('DELETE', '/reports/', json=request_body)
+            response = await client.delete('/reports/', params=request_params)
         if response.status_code != 200:
             raise exceptions.DatabaseAPIServiceError('Could not create report route in database api.')
 
