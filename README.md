@@ -44,8 +44,12 @@ python src/main.py
 ## Описание функционала
 Бот предоставляет данные из информационной системы Dodo (далее Dodo IS).
 Данные могут быть в двух видах:
-- отчёты
-- уведомления
+- отчёты (отмечены фиолетовым)
+- уведомления (отмечены желтым)
+
+<img src="./docs/img/settings-types.PNG" alt="Settings types" width="250">
+
+---
 
 Для начала нужно настроить точки продаж, по которым вы хотите получать отчёты/уведомления.
 
@@ -53,3 +57,8 @@ python src/main.py
 1. <img src="./docs/img/settings.PNG" alt="Settings" width="200">
 2. <img src="./docs/img/statistics-settings.PNG" alt="Statistics settings" width="200">
 3. <img src="./docs/img/choose-units.PNG" alt="Choose units" width="200">
+
+---
+
+Так выглядит пример отчёта **баланс эффективности**:
+<img src="./docs/img/report-example.png" alt="report example" width=100>
