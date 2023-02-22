@@ -62,4 +62,4 @@ python src/main.py
 
 Так выглядит пример отчёта **баланс эффективности**:
 
-<img src="./docs/img/report-example.png" alt="report example" width=100>
+<img src="./docs/img/report-example.png" alt="report example" width=250>
