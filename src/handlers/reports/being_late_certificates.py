@@ -31,10 +31,10 @@ async def on_being_late_certificates_statistics_report(
     )
     validate_report_routes(report_routes)
     units = UnitsConverter(filter_units_by_ids(units, report_routes[0].unit_ids))
-    accounts_tokens = await get_tokens_batch(auth_api_service=auth_api_service, account_names=units.account_names)
+    accounts_tokens = await get_tokens_batch(auth_api_service=auth_api_service, account_names=units.dodo_is_api_account_names)
     reports = await get_v2_statistics_reports_batch(
         api_method=dodo_api_service.get_late_delivery_vouchers_statistics_report,
-        units_grouped_by_account_name=units.grouped_by_account_name,
+        units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
         accounts_tokens=accounts_tokens,
     )
     late_delivery_vouchers_statistics = to_late_delivery_vouchers_statistics_view_dto(reports, units.unit_uuid_to_name)

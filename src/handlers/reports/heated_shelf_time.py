@@ -32,18 +32,18 @@ async def on_heated_shelf_time_statistics_report(
     validate_report_routes(report_routes)
     units = UnitsConverter(filter_units_by_ids(units, report_routes[0].unit_ids))
     accounts_cookies, accounts_tokens = await asyncio.gather(
-        get_cookies_batch(auth_api_service=auth_api_service, account_names=units.account_names),
-        get_tokens_batch(auth_api_service=auth_api_service, account_names=units.account_names),
+        get_cookies_batch(auth_api_service=auth_api_service, account_names=units.office_manager_account_names),
+        get_tokens_batch(auth_api_service=auth_api_service, account_names=units.dodo_is_api_account_names),
     )
     trips_with_one_order_reports, heated_shelf_time_reports = await asyncio.gather(
         get_v1_statistics_reports_batch(
             api_method=dodo_api_service.get_trips_with_one_order_statistics_report,
-            units_grouped_by_account_name=units.grouped_by_account_name,
+            units_grouped_by_account_name=units.grouped_by_office_manager_account_name,
             accounts_cookies=accounts_cookies,
         ),
         get_v2_statistics_reports_batch(
             api_method=dodo_api_service.get_heated_shelf_time_statistics_report,
-            units_grouped_by_account_name=units.grouped_by_account_name,
+            units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
             accounts_tokens=accounts_tokens,
         )
     )

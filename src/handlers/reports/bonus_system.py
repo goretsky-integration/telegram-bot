@@ -33,11 +33,11 @@ async def on_bonus_system_statistics_report(
     enabled_units_in_current_chat = filter_units_by_ids(units, report_routes[0].unit_ids)
 
     units = UnitsConverter(enabled_units_in_current_chat)
-    accounts_cookies = await get_cookies_batch(auth_api_service=auth_api_service, account_names=units.account_names)
+    accounts_cookies = await get_cookies_batch(auth_api_service=auth_api_service, account_names=units.office_manager_account_names)
     reports = await get_bonus_system_statistics_reports_batch(
         dodo_api_service=dodo_api_service,
         accounts_cookies=accounts_cookies,
-        units_grouped_by_account_name=units.grouped_by_account_name,
+        units_grouped_by_account_name=units.grouped_by_office_manager_account_name,
     )
     bonus_system_statistics = to_bonus_system_statistics_view_dto(reports, units.unit_id_to_name)
     view = BonusSystemStatisticsView(bonus_system_statistics)
