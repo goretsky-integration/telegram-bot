@@ -33,11 +33,11 @@ async def on_awaiting_orders_statistics_report(
     enabled_units_in_current_chat = filter_units_by_ids(units, report_routes[0].unit_ids)
 
     units = UnitsConverter(enabled_units_in_current_chat)
-    accounts_cookies = await get_cookies_batch(auth_api_service=auth_api_service, account_names=units.account_names)
+    accounts_cookies = await get_cookies_batch(auth_api_service=auth_api_service, account_names=units.office_manager_account_names)
     reports = await get_v1_statistics_reports_batch(
         api_method=dodo_api_service.get_awaiting_orders_statistics_report,
         accounts_cookies=accounts_cookies,
-        units_grouped_by_account_name=units.grouped_by_account_name,
+        units_grouped_by_account_name=units.grouped_by_office_manager_account_name,
     )
     awaiting_orders_statistics = to_awaiting_orders_statistics_view_dto(reports, units.unit_id_to_name)
     view = AwaitingOrdersStatisticsView(awaiting_orders_statistics=awaiting_orders_statistics)

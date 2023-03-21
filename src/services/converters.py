@@ -1,7 +1,7 @@
 import collections
 import functools
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Self
 from uuid import UUID
 
 import models.api_responses.database as database_models
@@ -25,7 +25,8 @@ __all__ = (
 
 
 def to_bonus_system_statistics_view_dto(
-        bonus_system_statistics: Iterable[api_models.UnitBonusSystemStatisticsReport],
+        bonus_system_statistics: Iterable[
+            api_models.UnitBonusSystemStatisticsReport],
         unit_id_to_name: dict[int, str],
 ) -> list[view_models.UnitBonusSystemStatisticsViewDTO]:
     return [
@@ -37,22 +38,27 @@ def to_bonus_system_statistics_view_dto(
 
 
 def to_heated_shelf_time_statistics_view_dto(
-        heated_shelf_time_statistics: Iterable[api_models.UnitHeatedShelfTimeStatisticsReport],
-        trips_with_one_order_statistics: Iterable[api_models.UnitTripsWithOneOrderStatisticsReport],
+        heated_shelf_time_statistics: Iterable[
+            api_models.UnitHeatedShelfTimeStatisticsReport],
+        trips_with_one_order_statistics: Iterable[
+            api_models.UnitTripsWithOneOrderStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitHeatedShelfTimeStatisticsViewDTO]:
-    unit_name_to_percentage = {unit.unit_name: unit.percentage for unit in trips_with_one_order_statistics}
+    unit_name_to_percentage = {unit.unit_name: unit.percentage for unit in
+                               trips_with_one_order_statistics}
     return [
         view_models.UnitHeatedShelfTimeStatisticsViewDTO(
             unit_name=unit_uuid_to_name[unit.unit_uuid],
             average_heated_shelf_time_in_seconds=unit.average_heated_shelf_time,
-            trips_with_one_order_percentage=unit_name_to_percentage.get(unit_uuid_to_name[unit.unit_uuid], 0),
+            trips_with_one_order_percentage=unit_name_to_percentage.get(
+                unit_uuid_to_name[unit.unit_uuid], 0),
         ) for unit in heated_shelf_time_statistics
     ]
 
 
 def to_total_cooking_time_statistics_view_dto(
-        kitchen_productivity_statistics_group: Iterable[api_models.KitchenProductivityStatisticsReport],
+        kitchen_productivity_statistics_group: Iterable[
+            api_models.KitchenProductivityStatisticsReport],
         unit_id_to_name: dict[int, str]
 ) -> view_models.TotalCookingTimeStatisticsReportViewDTO:
     units = []
@@ -64,12 +70,15 @@ def to_total_cooking_time_statistics_view_dto(
                 total_cooking_time=unit.total_cooking_time,
             ) for unit in kitchen_productivity_statistics.results
         ]
-        error_unit_names += [unit_id_to_name[unit_id] for unit_id in kitchen_productivity_statistics.errors]
-    return view_models.TotalCookingTimeStatisticsReportViewDTO(units=units, error_unit_names=error_unit_names)
+        error_unit_names += [unit_id_to_name[unit_id] for unit_id in
+                             kitchen_productivity_statistics.errors]
+    return view_models.TotalCookingTimeStatisticsReportViewDTO(units=units,
+                                                               error_unit_names=error_unit_names)
 
 
 def to_delivery_productivity_statistics_view_dto(
-        units_delivery_productivity_statistics: Iterable[api_models.UnitDeliveryProductivityStatisticsReport],
+        units_delivery_productivity_statistics: Iterable[
+            api_models.UnitDeliveryProductivityStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitDeliveryProductivityStatisticsViewDTO]:
     return [
@@ -82,7 +91,8 @@ def to_delivery_productivity_statistics_view_dto(
 
 
 def to_productivity_balance_statistics_view_dto(
-        units_productivity_balance_statistics: Iterable[api_models.UnitProductivityBalanceStatisticsReport],
+        units_productivity_balance_statistics: Iterable[
+            api_models.UnitProductivityBalanceStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitProductivityBalanceStatisticsViewDTO]:
     return [
@@ -96,7 +106,8 @@ def to_productivity_balance_statistics_view_dto(
 
 
 def to_restaurant_cooking_time_statistics_view_dto(
-        units_restaurant_cooking_time_statistics: Iterable[api_models.UnitRestaurantCookingTimeStatisticsReport],
+        units_restaurant_cooking_time_statistics: Iterable[
+            api_models.UnitRestaurantCookingTimeStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitRestaurantCookingTimeStatisticsViewDTO]:
     return [
@@ -108,7 +119,8 @@ def to_restaurant_cooking_time_statistics_view_dto(
 
 
 def to_late_delivery_vouchers_statistics_view_dto(
-        units_late_delivery_vouchers_statistics: Iterable[api_models.UnitLateDeliveryVouchersStatisticsReport],
+        units_late_delivery_vouchers_statistics: Iterable[
+            api_models.UnitLateDeliveryVouchersStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitLateDeliveryVouchersStatisticsViewDTO]:
     return [
@@ -121,7 +133,8 @@ def to_late_delivery_vouchers_statistics_view_dto(
 
 
 def to_delivery_speed_statistics_view_dto(
-        units_delivery_speed_statistics: Iterable[api_models.UnitDeliverySpeedStatisticsReport],
+        units_delivery_speed_statistics: Iterable[
+            api_models.UnitDeliverySpeedStatisticsReport],
         unit_uuid_to_name: dict[UUID, str],
 ) -> list[view_models.UnitDeliverySpeedStatisticsDTO]:
     return [
@@ -136,7 +149,8 @@ def to_delivery_speed_statistics_view_dto(
 
 
 def to_kitchen_productivity_statistics_view_dto(
-        kitchen_productivity_statistics_group: Iterable[api_models.KitchenProductivityStatisticsReport],
+        kitchen_productivity_statistics_group: Iterable[
+            api_models.KitchenProductivityStatisticsReport],
         unit_id_to_name: dict[int, str]
 ) -> view_models.KitchenProductivityStatisticsReportViewDTO:
     units = []
@@ -149,7 +163,8 @@ def to_kitchen_productivity_statistics_view_dto(
                 from_week_before_percent=unit.from_week_before_percent,
             ) for unit in kitchen_productivity_statistics.results
         ]
-        error_unit_names += [unit_id_to_name[unit_id] for unit_id in kitchen_productivity_statistics.errors]
+        error_unit_names += [unit_id_to_name[unit_id] for unit_id in
+                             kitchen_productivity_statistics.errors]
     return view_models.KitchenProductivityStatisticsReportViewDTO(
         units=units,
         error_unit_names=error_unit_names,
@@ -157,7 +172,8 @@ def to_kitchen_productivity_statistics_view_dto(
 
 
 def to_awaiting_orders_statistics_view_dto(
-        awaiting_orders_statistics_group: Iterable[api_models.AwaitingOrdersStatisticsReport],
+        awaiting_orders_statistics_group: Iterable[
+            api_models.AwaitingOrdersStatisticsReport],
         unit_id_to_name: dict[int, str],
 ) -> view_models.AwaitingOrdersStatisticsReportViewDTO:
     units = []
@@ -171,7 +187,8 @@ def to_awaiting_orders_statistics_view_dto(
                 couriers_on_shift_count=unit.couriers_on_shift_count,
             ) for unit in awaiting_orders_statistics.results
         ]
-        error_unit_names += [unit_id_to_name[unit_id] for unit_id in awaiting_orders_statistics.errors]
+        error_unit_names += [unit_id_to_name[unit_id] for unit_id in
+                             awaiting_orders_statistics.errors]
     return view_models.AwaitingOrdersStatisticsReportViewDTO(
         units=units,
         error_unit_names=error_unit_names,
@@ -194,7 +211,8 @@ def to_revenue_statistics_view_dto(
             revenue_today=revenue_statistics.results.total.today,
             from_week_before_in_percents=revenue_statistics.results.total.from_week_before_in_percents,
         ),
-        error_unit_names=[unit_id_to_name[unit_id] for unit_id in revenue_statistics.errors]
+        error_unit_names=[unit_id_to_name[unit_id] for unit_id in
+                          revenue_statistics.errors]
     )
 
 
@@ -219,8 +237,12 @@ class UnitsConverter:
         return {unit.uuid for unit in self.units}
 
     @functools.cached_property
-    def account_names(self) -> set[str]:
-        return {unit.account_name for unit in self.units}
+    def office_manager_account_names(self) -> set[str]:
+        return {unit.office_manager_account_name for unit in self.units}
+
+    @functools.cached_property
+    def dodo_is_api_account_names(self) -> set[str]:
+        return {unit.dodo_is_api_account_name for unit in self.units}
 
     @functools.cached_property
     def unit_id_to_name(self) -> dict[int, str]:
@@ -231,8 +253,21 @@ class UnitsConverter:
         return {unit.uuid: unit.name for unit in self.units}
 
     @functools.cached_property
-    def grouped_by_account_name(self) -> dict[str, 'UnitsConverter']:
+    def grouped_by_office_manager_account_name(self) -> dict[str, Self]:
         account_name_to_units = collections.defaultdict(list)
         for unit in self.units:
-            account_name_to_units[unit.account_name].append(unit)
-        return {account_name: UnitsConverter(units) for account_name, units in account_name_to_units.items()}
+            account_name_to_units[unit.office_manager_account_name].append(unit)
+        return {
+            account_name: UnitsConverter(units)
+            for account_name, units in account_name_to_units.items()
+        }
+
+    @functools.cached_property
+    def grouped_by_dodo_is_api_account_name(self) -> dict[str, Self]:
+        account_name_to_units = collections.defaultdict(list)
+        for unit in self.units:
+            account_name_to_units[unit.dodo_is_api_account_name].append(unit)
+        return {
+            account_name: UnitsConverter(units)
+            for account_name, units in account_name_to_units.items()
+        }
