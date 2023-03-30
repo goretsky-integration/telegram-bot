@@ -7,6 +7,7 @@ __all__ = ('Config', 'load_config')
 
 @dataclass(frozen=True, slots=True)
 class Config:
+    country_code: str
     logfile_path: str
     bot_token: str
     api_url: str
@@ -18,6 +19,7 @@ def load_config(config_file_path: str | pathlib.Path) -> Config:
     with open(config_file_path, 'rb') as file:
         config = tomllib.load(file)
     return Config(
+        country_code=config['app']['country_code'],
         logfile_path=config['app']['logfile_path'] or None,
         api_url=config['api']['dodo_api_url'],
         db_api_url=config['api']['database_api_url'],
