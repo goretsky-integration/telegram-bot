@@ -6,7 +6,7 @@ authors = ["usbtypec1 <eldos.baktybekov@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-aiogram = "^2.22.1"
+aiogram = "^2.25.1"
 pydantic = "^1.9.2"
 httpx = "^0.23.0"
 
