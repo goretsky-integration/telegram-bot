@@ -1,9 +1,12 @@
 from typing import Iterable
 
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, InlineKeyboardMarkup
+from aiogram.types import (
+    ReplyKeyboardRemove, ReplyKeyboardMarkup,
+    InlineKeyboardMarkup, KeyboardButton
+)
 
 import models.api_responses.database as models
-from keyboards import MainMenuMarkup, StatisticsReportsMarkup, SettingsMarkup
+from keyboards import StatisticsReportsMarkup, SettingsMarkup
 from views.base import BaseView
 
 __all__ = (
@@ -15,12 +18,19 @@ __all__ = (
 
 
 class ShowKeyboardView(BaseView):
-
-    def get_text(self) -> str:
-        return 'Приветствую 👋'
-
-    def get_reply_markup(self) -> ReplyKeyboardMarkup:
-        return MainMenuMarkup()
+    text = 'Приветствую 👋'
+    reply_markup = ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[
+            [
+                KeyboardButton('📊 Отчёты/Статистика'),
+            ],
+            [
+                KeyboardButton('⚙️ Настройки'),
+                KeyboardButton('🙎‍♂️ Моя роль'),
+            ],
+        ]
+    )
 
 
 class HideKeyboardView(BaseView):
