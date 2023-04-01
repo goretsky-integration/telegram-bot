@@ -1,14 +1,15 @@
-import asyncio
-import logging
-
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
 
+from core import exceptions
 from models import Query
 from services import converters
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService
-from shortcuts import get_message, answer_views, validate_report_routes
+from services.http_client_factory import HTTPClientFactory
+from shortcuts import (
+    get_message, edit_message_by_view
+)
 from utils.callback_data import show_statistics
 from views import RevenueStatisticsView
 
@@ -17,23 +18,37 @@ __all__ = ('register_handlers',)
 
 async def on_daily_revenue_statistics_report(
         query: Query,
-        dodo_api_service: DodoAPIService,
-        database_api_service: DatabaseAPIService,
+        country_code: str,
+        dodo_api_http_client_factory: HTTPClientFactory,
+        database_api_http_client_factory: HTTPClientFactory,
 ) -> None:
-    logging.info('Revenue statistics report request')
-    message = get_message(query)
-    report_message, units, report_routes = await asyncio.gather(
-        message.answer('Загрузка...'),
-        database_api_service.get_units(),
-        database_api_service.get_reports_routes(chat_id=message.chat.id, report_type='STATISTICS'),
-    )
-    validate_report_routes(report_routes)
-    revenue_statistics = await dodo_api_service.get_revenue_statistics_report(report_routes[0].unit_ids)
+    async with database_api_http_client_factory() as http_client:
+        database_api_service = DatabaseAPIService(http_client)
+
+        report_type = await database_api_service.get_report_type_by_name(
+            name='STATISTICS',
+        )
+        units = await database_api_service.get_role_units(
+            chat_id=query.from_user.id,
+        )
+        unit_ids = await database_api_service.get_report_route_units(
+            chat_id=query.from_user.id,
+            report_type_id=report_type.id,
+        )
+    if not unit_ids:
+        raise exceptions.NoEnabledUnitsError
+
+    report_message = await get_message(query).answer('Загрузка...')
+
+    async with dodo_api_http_client_factory() as http_client:
+        dodo_api_service = DodoAPIService(http_client, country_code)
+        revenue_statistics = await dodo_api_service.get_revenue_statistics_report(unit_ids)
+
     unit_id_to_name = {unit.id: unit.name for unit in units}
-    revenue_statistics_view_dto = converters.to_revenue_statistics_view_dto(revenue_statistics, unit_id_to_name)
+    revenue_statistics_view_dto = converters.to_revenue_statistics_view_dto(
+        revenue_statistics, unit_id_to_name)
     view = RevenueStatisticsView(revenue_statistics_view_dto)
-    await answer_views(report_message, view, edit=True)
-    logging.info('Revenue statistics report sent')
+    await edit_message_by_view(report_message, view)
 
 
 def register_handlers(dispatcher: Dispatcher):
