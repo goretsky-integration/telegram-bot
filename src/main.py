@@ -60,6 +60,12 @@ def main():
         ),
     )
 
+    executor.start(
+        dispatcher=dp,
+        future=setup_bot_commands(
+            bot=bot, commands_file_path=commands_file_path
+        ),
+    )
     executor.start_polling(
         dispatcher=dp,
         skip_updates=True,
