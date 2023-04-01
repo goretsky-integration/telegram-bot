@@ -2,7 +2,6 @@ import asyncio
 from typing import Callable, Iterable, Any
 from uuid import UUID
 
-import httpx
 from pydantic import parse_obj_as
 
 import models.api_responses.auth as auth_models
@@ -10,6 +9,7 @@ import models.api_responses.dodo as models
 from core import exceptions
 from services.api_responses import decode_response_json_or_raise_error
 from services.converters import UnitsConverter
+from services.http_client_factory import HTTPClient
 
 __all__ = (
     'DodoAPIService',
@@ -19,26 +19,28 @@ __all__ = (
 )
 
 
-class DodoAPIService:
-    __slots__ = ('_http_client_factory', '_country_code')
 
-    def __init__(self, *, http_client_factory: Callable[[], httpx.AsyncClient], country_code: str):
-        self._http_client_factory = http_client_factory
-        self._country_code = country_code
+class DodoAPIService:
+    __slots__ = ('__http_client', '__country_code')
+
+    def __init__(self, http_client: HTTPClient, country_code: str):
+        self.__http_client = http_client
+        self.__country_code = country_code
 
     async def get_revenue_statistics_report(self, unit_ids: Iterable[int]) -> models.RevenueStatisticsReport:
-        url = f'/v1/{self._country_code}/reports/revenue'
+        url = f'/v1/{self.__country_code}/reports/revenue'
         request_query_params = {'unit_ids': tuple(unit_ids)}
-        async with self._http_client_factory() as client:
-            response = await client.get(url, params=request_query_params)
+        response = await self.__http_client.get(
+            url=url,
+            params=request_query_params,
+        )
         return models.RevenueStatisticsReport.parse_obj(response.json())
 
     async def __get_v2_statistics_report(self, *, resource: str, unit_uuids: Iterable[UUID], access_token: str):
-        url = f'/v2/{self._country_code}/reports/{resource}'
+        url = f'/v2/{self.__country_code}/reports/{resource}'
         request_query_params = {'unit_uuids': tuple(unit_uuids)}
         request_headers = {'Authorization': f'Bearer {access_token}'}
-        async with self._http_client_factory() as client:
-            response = await client.get(url, params=request_query_params, headers=request_headers)
+        response = await self.__http_client.get(url, params=request_query_params, headers=request_headers)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DodoAPIServiceError
@@ -123,10 +125,9 @@ class DodoAPIService:
         return parse_obj_as(tuple[models.UnitProductivityBalanceStatisticsReport, ...], response_data)
 
     async def __get_v1_statistics_report(self, *, resource: str, unit_ids: Iterable[int], cookies: dict):
-        url = f'/v1/{self._country_code}/reports/{resource}'
+        url = f'/v1/{self.__country_code}/reports/{resource}'
         request_query_params = {'unit_ids': tuple(unit_ids)}
-        async with self._http_client_factory() as client:
-            response = await client.get(url, cookies=cookies, params=request_query_params)
+        response = await self.__http_client.get(url, cookies=cookies, params=request_query_params)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DodoAPIServiceError
@@ -151,10 +152,9 @@ class DodoAPIService:
             unit_ids_and_names: Iterable[dict],
             cookies: dict,
     ) -> tuple[models.UnitBonusSystemStatisticsReport, ...]:
-        url = f'/v1/{self._country_code}/reports/bonus-system'
+        url = f'/v1/{self.__country_code}/reports/bonus-system'
         request_body = tuple(unit_ids_and_names)
-        async with self._http_client_factory() as client:
-            response = await client.post(url, cookies=cookies, json=request_body)
+        response = await self.__http_client.post(url, cookies=cookies, json=request_body)
         response_data = decode_response_json_or_raise_error(response)
         if response.status_code != 200:
             raise exceptions.DodoAPIServiceError

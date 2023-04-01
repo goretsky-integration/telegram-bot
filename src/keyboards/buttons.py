@@ -42,7 +42,8 @@ class ShowStatisticsButton(InlineKeyboardButton):
     def __init__(self, statistics: models.ReportType):
         super().__init__(
             text=statistics.verbose_name,
-            callback_data=callback_data.show_statistics.new(report_type_name=statistics.name)
+            callback_data=callback_data.show_statistics.new(
+                report_type_name=statistics.name)
         )
 
 
@@ -51,31 +52,41 @@ class ReportSettingsButton(InlineKeyboardButton):
     def __init__(self, report_type: models.ReportType):
         super().__init__(
             text=report_type.verbose_name,
-            callback_data=callback_data.report_settings.new(report_type_name=report_type.name)
+            callback_data=callback_data.ReportSettingsCallbackData().new(
+                report_type_id=report_type.id,
+            )
         )
 
 
 class ChooseRegionButton(InlineKeyboardButton):
 
-    def __init__(self, report_type_name: str, region: str):
+    def __init__(self, report_type_id: int, region: models.Region):
+        callback_data_factory = callback_data.UnitsByRegionCallbackData()
         super().__init__(
-            text=region,
-            callback_data=callback_data.units_by_region.new(
-                region=region,
-                report_type_name=report_type_name,
+            text=region.name,
+            callback_data=callback_data_factory.new(
+                region_id=region.id,
+                report_type_id=report_type_id,
             ),
         )
 
 
 class SwitchUnitStatusButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region: str, unit_id: int, unit_name: str, is_unit_enabled: bool):
+    def __init__(
+            self,
+            report_type_id: int,
+            region_id: int,
+            unit_id: int,
+            unit_name: str,
+            is_unit_enabled: bool,
+    ):
         super().__init__(
             text=f'{"🟢" if is_unit_enabled else "🔴"} {unit_name}',
-            callback_data=callback_data.switch_unit_status.new(
-                report_type=report_type,
+            callback_data=callback_data.SwitchUnitStatusCallbackData().new(
+                report_type_id=report_type_id,
                 unit_id=unit_id,
-                region=region,
+                region_id=region_id,
                 is_unit_enabled=int(is_unit_enabled),
             )
         )
@@ -83,12 +94,12 @@ class SwitchUnitStatusButton(InlineKeyboardButton):
 
 class EnableAllUnitsByRegionButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region: str):
+    def __init__(self, report_type_id: int, region_id: int):
         super().__init__(
             text='Включить все',
-            callback_data=callback_data.switch_all_unit_statuses.new(
-                report_type=report_type,
-                region=region,
+            callback_data=callback_data.SwitchAllUnitStatusesCallbackData().new(
+                report_type_id=report_type_id,
+                region_id=region_id,
                 action='enable'
             ),
         )
@@ -96,12 +107,12 @@ class EnableAllUnitsByRegionButton(InlineKeyboardButton):
 
 class DisableAllUnitsByRegionButton(InlineKeyboardButton):
 
-    def __init__(self, report_type: str, region: str):
+    def __init__(self, report_type_id: int, region_id: int):
         super().__init__(
             text='Отключить все',
-            callback_data=callback_data.switch_all_unit_statuses.new(
-                report_type=report_type,
-                region=region,
-                action='disable',
+            callback_data=callback_data.SwitchAllUnitStatusesCallbackData().new(
+                report_type_id=report_type_id,
+                region_id=region_id,
+                action='disable'
             ),
         )

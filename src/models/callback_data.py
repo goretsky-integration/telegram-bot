@@ -10,7 +10,7 @@ __all__ = (
 
 
 class ReportTypeCallbackData(TypedDict):
-    report_type_name: str
+    report_type_id: int
 
 
 class StatisticsReportTypeCallbackData(TypedDict):
@@ -18,18 +18,18 @@ class StatisticsReportTypeCallbackData(TypedDict):
 
 
 class UnitsByRegionCallbackData(TypedDict):
-    region: str
-    report_type_name: str
+    region_id: int
+    report_type_id: int
 
 
 class SwitchUnitStatusCallbackData(TypedDict):
-    report_type: str
-    is_unit_enabled: str
-    unit_id: str
-    region: str
+    report_type_id: int
+    is_unit_enabled: bool
+    unit_id: int
+    region_id: int
 
 
 class AllUnitIdsByRegionCallbackData(TypedDict):
-    region: str
-    report_type: str
+    region_id: int
+    report_type_id: int
     action: Literal['disable', 'enable']

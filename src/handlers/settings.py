@@ -1,47 +1,61 @@
+import asyncio
+
 from aiogram import Dispatcher
 from aiogram.types import CallbackQuery
 
 import models
 from services.database_api import DatabaseAPIService
+from services.http_client_factory import HTTPClientFactory
 from shortcuts import answer_views, edit_message_by_view
 from utils import callback_data as cd
+from views import UnitsResponseView, RegionsResponseView
 
 __all__ = ('register_handlers',)
-
-from views import UnitsResponseView, RegionsResponseView
 
 
 async def on_switch_all_unit_statuses_button(
         callback_query: CallbackQuery,
         callback_data: models.AllUnitIdsByRegionCallbackData,
-        database_api_service: DatabaseAPIService,
+        database_api_http_client_factory: HTTPClientFactory,
 ):
-    region = callback_data['region']
-    report_type = callback_data['report_type']
-    action = callback_data['action']
-    chat_id = callback_query.message.chat.id
+    async with database_api_http_client_factory() as http_client:
+        database_api_service = DatabaseAPIService(http_client)
+        units = await database_api_service.get_role_units(
+            region_id=callback_data['region_id'],
+            chat_id=callback_query.from_user.id,
+        )
 
-    units_by_region = await database_api_service.get_units(region=region)
-    unit_ids_by_region = [unit.id for unit in units_by_region]
+        enabled_unit_ids = await database_api_service.get_report_route_units(
+            chat_id=callback_query.from_user.id,
+            report_type_id=callback_data['report_type_id']
+        )
 
-    match action:
-        case 'enable':
-            await database_api_service.add_report_route(
-                report_type=report_type,
-                chat_id=chat_id,
-                unit_ids=unit_ids_by_region,
-            )
-        case 'disable':
-            await database_api_service.remove_report_route(
-                report_type=report_type,
-                chat_id=chat_id,
-                unit_ids=unit_ids_by_region,
-            )
+        if callback_data['action'] == 'disable':
+            method = database_api_service.delete_report_routes
+            unit_ids_for_request = enabled_unit_ids
+        else:
+            method = database_api_service.create_report_routes
+            unit_ids_for_request = {
+                unit.id for unit in units
+                if unit.id not in enabled_unit_ids
+            }
+        await method(
+            report_type_id=callback_data['report_type_id'],
+            chat_id=callback_query.from_user.id,
+            unit_ids=unit_ids_for_request,
+        )
 
-    enabled_reports = await database_api_service.get_reports_routes(report_type=report_type, chat_id=chat_id)
-    enabled_unit_ids = [unit_id for report in enabled_reports for unit_id in report.unit_ids]
-    enabled_unit_ids_by_region = set(unit_ids_by_region) & set(enabled_unit_ids)
-    response = UnitsResponseView(report_type, region, enabled_unit_ids_by_region, units_by_region)
+        enabled_unit_ids = await database_api_service.get_report_route_units(
+            chat_id=callback_query.from_user.id,
+            report_type_id=callback_data['report_type_id']
+        )
+
+    response = UnitsResponseView(
+        report_type_id=callback_data['report_type_id'],
+        region_id=callback_data['region_id'],
+        enabled_unit_ids=enabled_unit_ids,
+        all_units=units,
+    )
     await edit_message_by_view(callback_query.message, response)
     await callback_query.answer()
 
@@ -49,62 +63,87 @@ async def on_switch_all_unit_statuses_button(
 async def on_switch_unit_statis_button(
         callback_query: CallbackQuery,
         callback_data: models.SwitchUnitStatusCallbackData,
-        database_api_service: DatabaseAPIService,
+        database_api_http_client_factory: HTTPClientFactory,
 ):
-    await callback_query.answer()
-    is_unit_enabled = bool(int(callback_data['is_unit_enabled']))
-    unit_id = int(callback_data['unit_id'])
-    report_type = callback_data['report_type']
-    region = callback_data['region']
+    async with database_api_http_client_factory() as http_client:
+        database_api_service = DatabaseAPIService(http_client)
 
-    if is_unit_enabled:
-        await database_api_service.remove_report_route(
-            report_type=report_type,
-            chat_id=callback_query.message.chat.id,
-            unit_ids=[unit_id],
+        method = (
+            database_api_service.delete_report_routes
+            if callback_data['is_unit_enabled']
+            else database_api_service.create_report_routes
         )
-    else:
-        await database_api_service.add_report_route(
-            report_type=report_type,
-            chat_id=callback_query.message.chat.id,
-            unit_ids=[unit_id],
+        await method(
+            report_type_id=callback_data['report_type_id'],
+            chat_id=callback_query.from_user.id,
+            unit_ids=(callback_data['unit_id'],)
         )
-    units_by_region = await database_api_service.get_units(region=region)
-    unit_ids_by_region = {unit.id for unit in units_by_region}
-    enabled_reports = await database_api_service.get_reports_routes(
-        report_type=report_type,
-        chat_id=callback_query.message.chat.id,
+
+        units = await database_api_service.get_role_units(
+            chat_id=callback_query.from_user.id,
+            region_id=callback_data['region_id'],
+        )
+        enabled_unit_ids = await database_api_service.get_report_route_units(
+            chat_id=callback_query.from_user.id,
+            report_type_id=callback_data['report_type_id'],
+        )
+
+    response = UnitsResponseView(
+        report_type_id=callback_data['report_type_id'],
+        region_id=callback_data['region_id'],
+        enabled_unit_ids=enabled_unit_ids,
+        all_units=units,
     )
-    enabled_unit_ids = [unit_id for report in enabled_reports for unit_id in report.unit_ids]
-    enabled_unit_ids_by_region = unit_ids_by_region & set(enabled_unit_ids)
-    response = UnitsResponseView(report_type, region, enabled_unit_ids_by_region, units_by_region)
     await edit_message_by_view(callback_query.message, response)
 
 
 async def on_region_units_button(
         callback_query: CallbackQuery,
         callback_data: models.UnitsByRegionCallbackData,
-        database_api_service: DatabaseAPIService,
+        database_api_http_client_factory: HTTPClientFactory,
 ):
-    report_type = callback_data['report_type_name']
-    region = callback_data['region']
-    all_units = await database_api_service.get_units(region=region)
-    enabled_units = await database_api_service.get_reports_routes(report_type=report_type,
-                                                                  chat_id=callback_query.message.chat.id)
-    enabled_unit_ids = [unit_id for report in enabled_units for unit_id in report.unit_ids]
-    response = UnitsResponseView(report_type, region, enabled_unit_ids, all_units)
+    async with database_api_http_client_factory() as http_client:
+        database_api_service = DatabaseAPIService(http_client)
+
+        async with asyncio.TaskGroup() as task_group:
+            units = task_group.create_task(
+                database_api_service.get_role_units(
+                    chat_id=callback_query.from_user.id,
+                    region_id=callback_data['region_id'],
+                ),
+            )
+            report_routes_unit_ids = task_group.create_task(
+                database_api_service.get_report_route_units(
+                    chat_id=callback_query.from_user.id,
+                    report_type_id=callback_data['report_type_id'],
+                ),
+            )
+    units = units.result()
+    report_routes_unit_ids = report_routes_unit_ids.result()
+
+    response = UnitsResponseView(
+        report_type_id=callback_data['report_type_id'],
+        region_id=callback_data['region_id'],
+        enabled_unit_ids=report_routes_unit_ids,
+        all_units=units,
+    )
     await edit_message_by_view(callback_query.message, response)
     await callback_query.answer()
 
 
-async def on_statistics_settings_button(
+async def show_report_type_regions_menu(
         callback_query: CallbackQuery,
         callback_data: models.ReportTypeCallbackData,
-        database_api_service: DatabaseAPIService,
+        database_api_http_client_factory: HTTPClientFactory,
 ):
-    report_type = callback_data['report_type_name']
-    regions = await database_api_service.get_regions()
-    response = RegionsResponseView(report_type, regions)
+    async with database_api_http_client_factory() as http_client:
+        database_api_service = DatabaseAPIService(http_client)
+        regions = await database_api_service.get_role_regions(
+            chat_id=callback_query.from_user.id,
+        )
+    report_type_id = callback_data['report_type_id']
+
+    response = RegionsResponseView(report_type_id, regions)
     await answer_views(callback_query.message, response)
     await callback_query.answer()
 
@@ -112,17 +151,17 @@ async def on_statistics_settings_button(
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_callback_query_handler(
         on_switch_all_unit_statuses_button,
-        cd.switch_all_unit_statuses.filter()
+        cd.SwitchAllUnitStatusesCallbackData().filter()
     )
     dispatcher.register_callback_query_handler(
         on_switch_unit_statis_button,
-        cd.switch_unit_status.filter(),
+        cd.SwitchUnitStatusCallbackData().filter(),
     )
     dispatcher.register_callback_query_handler(
         on_region_units_button,
-        cd.units_by_region.filter(),
+        cd.UnitsByRegionCallbackData().filter(),
     )
     dispatcher.register_callback_query_handler(
-        on_statistics_settings_button,
-        cd.report_settings.filter(),
+        show_report_type_regions_menu,
+        cd.ReportSettingsCallbackData().filter(),
     )

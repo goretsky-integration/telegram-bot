@@ -1,4 +1,5 @@
 [app]
+country_code = ""
 logfile_path = ""  # optional
 debug = false
 telegram_bot_token = "your token"
@@ -6,3 +7,4 @@ telegram_bot_token = "your token"
 [api]
 dodo_api_url = ""
 database_api_url = ""
+auth_api_url = ""
