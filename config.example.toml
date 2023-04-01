@@ -7,3 +7,4 @@ telegram_bot_token = "your token"
 [api]
 dodo_api_url = ""
 database_api_url = ""
+auth_api_url = ""
