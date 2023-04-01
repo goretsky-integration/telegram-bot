@@ -1,0 +1,66 @@
+[
+  {
+    "command": "bonus_system",
+    "description": "Бонусная система"
+  },
+  {
+    "command": "cooking_time",
+    "description": "Время приготовления (общее)"
+  },
+  {
+    "command": "restaurant_cooking_time",
+    "description": "Время приготовления (ресторан)"
+  },
+  {
+    "command": "daily_revenue",
+    "description": "Выручка за сегодня"
+  },
+  {
+    "command": "delivery_speed",
+    "description": "Скорость доставки"
+  },
+  {
+    "command": "delivery_awaiting_time",
+    "description": "Время на полке"
+  },
+  {
+    "command": "kitchen_performance",
+    "description": "Производительность кухни"
+  },
+  {
+    "command": "delivery_performance",
+    "description": "Производительность доставки"
+  },
+  {
+    "command": "being_late_certificates",
+    "description": "Сертификаты за опоздание"
+  },
+  {
+    "command": "awaiting_orders",
+    "description": "Заказов остывает на полке - курьеры всего / в очереди"
+  },
+  {
+    "command": "productivity_balance",
+    "description": "Баланс эффективности"
+  },
+  {
+    "command": "start",
+    "description": "👨‍💻 Главное меню"
+  },
+  {
+    "command": "settings",
+    "description": "⚙️ Настройки"
+  },
+  {
+    "command": "reports",
+    "description": "🔎 Отчёты по статистике"
+  },
+  {
+    "command": "show_keyboard",
+    "description": "Показать клавиатуру"
+  },
+  {
+    "command": "hide_keyboard",
+    "description": "Скрыть клавиатуру"
+  }
+]
