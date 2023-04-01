@@ -28,3 +28,22 @@ class AuthAPIServiceError(APIServiceError):
 
 class NoEnabledUnitsError(ApplicationError):
     pass
+
+
+class UserHasNoRoleError(DatabaseAPIServiceError):
+    pass
+
+
+class RoleNotFoundError(DatabaseAPIServiceError):
+    pass
+
+
+class UserNotFoundError(DatabaseAPIServiceError):
+
+    def __init__(self, *args, chat_id: int):
+        super().__init__(*args)
+        self.chat_id = chat_id
+
+
+class UserAlreadyExistsError(DatabaseAPIServiceError):
+    pass
