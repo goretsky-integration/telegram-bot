@@ -1,10 +1,14 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Text, Command, CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 
 from services.database_api import DatabaseAPIService
 from shortcuts import answer_views
-from views import SettingsMenuView, StatisticsReportsMenuView, HideKeyboardView, ShowKeyboardView
+from views import (
+    SettingsMenuView,
+    StatisticsReportsMenuView,
+    ShowKeyboardView,
+)
 
 __all__ = ('register_handlers',)
 
@@ -20,7 +24,10 @@ async def on_statistics_reports_button(message: Message, database_api_service: D
 
 
 async def on_hide_keyboard_command(message: Message):
-    await answer_views(message, HideKeyboardView())
+    await message.answer(
+        'Клавиатура спрятана 🙈',
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 
 async def on_start(message: Message):
