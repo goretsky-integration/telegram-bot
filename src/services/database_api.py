@@ -92,6 +92,10 @@ class DatabaseAPIService:
             )
             response_data = response.json()
 
+            match (response.status_code, response_data):
+                case [403, {'message': 'User has no any role'}]:
+                    raise exceptions.UserHasNoRoleError
+
             request_query_params['offset'] += limit
 
             if units := response_data['units']:
@@ -140,6 +144,10 @@ class DatabaseAPIService:
             )
             response_data = response.json()
 
+            match (response.status_code, response_data):
+                case [403, {'message': 'User has no any role'}]:
+                    raise exceptions.UserHasNoRoleError
+
             request_query_params['offset'] += limit
 
             if regions := response_data['regions']:
@@ -179,6 +187,10 @@ class DatabaseAPIService:
                 params=request_query_params,
             )
             response_data = response.json()
+
+            match (response.status_code, response_data):
+                case [403, {'message': 'User has no any role'}]:
+                    raise exceptions.UserHasNoRoleError
 
             request_query_params['offset'] += limit
 

@@ -14,9 +14,31 @@ from core import exceptions
 from services.mappers import group_units_by_region
 from services.database_api import DatabaseAPIService
 from services.http_client_factory import HTTPClientFactory
-from shortcuts import answer_views, edit_message_by_view
+from shortcuts import answer_views, edit_message_by_view, get_message
 from views import RoleMenuView
 from utils.states import SetUserRoleStates
+
+
+async def on_user_has_no_role_error(
+        update: Update,
+        exception: exceptions.UserHasNoRoleError,
+):
+    message = get_message(update)
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    'Установить роль',
+                    callback_data='set_role',
+                )
+            ]
+        ]
+    )
+    await message.answer(
+        'Вы не можете использовать бота, так как у вас не установлена роль 😕',
+        reply_markup=markup,
+    )
+    return True
 
 
 async def on_role_not_found_error(
@@ -88,22 +110,27 @@ async def show_role_menu(
 ):
     async with database_api_http_client_factory() as http_client:
         database_api_service = DatabaseAPIService(http_client)
-        async with asyncio.TaskGroup() as task_group:
-            units = task_group.create_task(
-                database_api_service.get_role_units(
-                    chat_id=query.from_user.id,
-                ),
-            )
-            report_types = task_group.create_task(
-                database_api_service.get_role_report_types(
-                    chat_id=query.from_user.id,
-                ),
-            )
-            regions = task_group.create_task(
-                database_api_service.get_role_regions(
-                    chat_id=query.from_user.id,
-                ),
-            )
+        try:
+            async with asyncio.TaskGroup() as task_group:
+                units = task_group.create_task(
+                    database_api_service.get_role_units(
+                        chat_id=query.from_user.id,
+                    ),
+                )
+                report_types = task_group.create_task(
+                    database_api_service.get_role_report_types(
+                        chat_id=query.from_user.id,
+                    ),
+                )
+                regions = task_group.create_task(
+                    database_api_service.get_role_regions(
+                        chat_id=query.from_user.id,
+                    ),
+                )
+        except ExceptionGroup as eg:
+            for exc in eg.exceptions:
+                raise exc
+
     units, report_types, regions = [
         task.result() for task in (units, report_types, regions)
     ]
@@ -114,6 +141,10 @@ async def show_role_menu(
 
 
 def register_message_handlers(dispatcher: Dispatcher):
+    dispatcher.register_errors_handler(
+        on_user_has_no_role_error,
+        exception=exceptions.UserHasNoRoleError,
+    )
     dispatcher.register_errors_handler(
         on_role_not_found_error,
         exception=exceptions.RoleNotFoundError,
