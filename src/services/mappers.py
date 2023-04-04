@@ -1,6 +1,9 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
+from aiogram.types import User, Chat
+
+from models import ChatToCreate
 from models.api_responses import database as models
 from models.mappers import RegionUnits
 
@@ -19,3 +22,29 @@ def group_units_by_region(
             units=region_id_to_units[region.id],
         ) for region in regions
     ]
+
+
+def map_user_to_create_dto(user: User) -> ChatToCreate:
+    return ChatToCreate(
+        id=user.id,
+        type='PRIVATE',
+        title=user.full_name,
+        username=user.username,
+    )
+
+
+def map_chat_to_create_dto(chat: Chat) -> ChatToCreate:
+    match chat.type:
+        case 'group' | 'supergroup':
+            chat_type = 'GROUP'
+        case 'private':
+            chat_type = 'PRIVATE'
+        case _ as other_chat_type:
+            raise ValueError(f'Invalid chat type "{other_chat_type}"')
+
+    return ChatToCreate(
+        id=chat.id,
+        title=chat.full_name,
+        username=chat.username,
+        type=chat_type,
+    )
