@@ -39,10 +39,7 @@ class RoleNotFoundError(DatabaseAPIServiceError):
 
 
 class UserNotFoundError(DatabaseAPIServiceError):
-
-    def __init__(self, *args, chat_id: int):
-        super().__init__(*args)
-        self.chat_id = chat_id
+    pass
 
 
 class UserAlreadyExistsError(DatabaseAPIServiceError):
