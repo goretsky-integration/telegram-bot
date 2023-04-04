@@ -27,7 +27,8 @@ async def on_startup(dispatcher: Dispatcher):
 
 def setup_logging(*, logfile_path: str | pathlib.Path, debug: bool) -> None:
     loglevel = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(filename=logfile_path, level=loglevel)
+    logger = logging.getLogger('telegram_bot')
+    logger.setLevel(loglevel)
 
 
 def main():
