@@ -26,7 +26,7 @@ async def on_switch_all_unit_statuses_button(
         )
 
         enabled_unit_ids = await database_api_service.get_report_route_units(
-            chat_id=callback_query.from_user.id,
+            chat_id=callback_query.message.chat.id,
             report_type_id=callback_data['report_type_id']
         )
 
@@ -41,12 +41,13 @@ async def on_switch_all_unit_statuses_button(
             }
         await method(
             report_type_id=callback_data['report_type_id'],
-            chat_id=callback_query.from_user.id,
+            chat_id=callback_query.message.chat.id,
             unit_ids=unit_ids_for_request,
+            user_chat_id=callback_query.from_user.id,
         )
 
         enabled_unit_ids = await database_api_service.get_report_route_units(
-            chat_id=callback_query.from_user.id,
+            chat_id=callback_query.message.chat.id,
             report_type_id=callback_data['report_type_id']
         )
 
@@ -75,7 +76,8 @@ async def on_switch_unit_statis_button(
         )
         await method(
             report_type_id=callback_data['report_type_id'],
-            chat_id=callback_query.from_user.id,
+            user_chat_id=callback_query.from_user.id,
+            chat_id=callback_query.message.chat.id,
             unit_ids=(callback_data['unit_id'],)
         )
 
@@ -84,7 +86,7 @@ async def on_switch_unit_statis_button(
             region_id=callback_data['region_id'],
         )
         enabled_unit_ids = await database_api_service.get_report_route_units(
-            chat_id=callback_query.from_user.id,
+            chat_id=callback_query.message.chat.id,
             report_type_id=callback_data['report_type_id'],
         )
 
@@ -114,7 +116,7 @@ async def on_region_units_button(
             )
             report_routes_unit_ids = task_group.create_task(
                 database_api_service.get_report_route_units(
-                    chat_id=callback_query.from_user.id,
+                    chat_id=callback_query.message.chat.id,
                     report_type_id=callback_data['report_type_id'],
                 ),
             )

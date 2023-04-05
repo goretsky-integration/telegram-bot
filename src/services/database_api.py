@@ -1,21 +1,13 @@
 from collections.abc import Iterable
-from typing import AsyncGenerator, Never, Protocol
+from typing import AsyncGenerator, Never
 
 import httpx
 from pydantic import parse_obj_as
 
 import models.api_responses.database as models
 from core import exceptions
+from models import ChatToCreate
 from services.api_responses import decode_response_json_or_raise_error
-
-
-class IChat(Protocol):
-    id: int
-    type: str
-    username: str | None
-
-    @property
-    def full_name(self) -> str: ...
 
 
 def handle_set_user_role_response(
@@ -95,6 +87,8 @@ class DatabaseAPIService:
             match (response.status_code, response_data):
                 case [403, {'message': 'User has no any role'}]:
                     raise exceptions.UserHasNoRoleError
+                case [404, {'message': 'Chat by chat ID is not found'}]:
+                    raise exceptions.UserNotFoundError
 
             request_query_params['offset'] += limit
 
@@ -147,6 +141,8 @@ class DatabaseAPIService:
             match (response.status_code, response_data):
                 case [403, {'message': 'User has no any role'}]:
                     raise exceptions.UserHasNoRoleError
+                case[404, {'message': 'Chat by chat ID is not found'}]:
+                    raise exceptions.UserNotFoundError
 
             request_query_params['offset'] += limit
 
@@ -191,6 +187,8 @@ class DatabaseAPIService:
             match (response.status_code, response_data):
                 case [403, {'message': 'User has no any role'}]:
                     raise exceptions.UserHasNoRoleError
+                case[404, {'message': 'Chat by chat ID is not found'}]:
+                    raise exceptions.UserNotFoundError
 
             request_query_params['offset'] += limit
 
@@ -250,12 +248,12 @@ class DatabaseAPIService:
             all_report_types += report_types
         return all_report_types
 
-    async def create_chat(self, chat: IChat) -> None | Never:
+    async def create_chat(self, chat: ChatToCreate) -> None | Never:
         url = '/telegram-chats/'
         request_data = {
             'chat_id': chat.id,
-            'type': chat.type.upper(),
-            'title': chat.full_name,
+            'type': chat.type,
+            'title': chat.title,
             'username': chat.username,
         }
         response = await self.__http_client.post(url, json=request_data)
@@ -266,15 +264,26 @@ class DatabaseAPIService:
             *,
             report_type_id: int,
             chat_id: int,
+            user_chat_id: int,
             unit_ids: Iterable[int],
     ):
         url = '/report-routes/'
         request_data = {
             'report_type_id': report_type_id,
             'chat_id': chat_id,
+            'user_chat_id': user_chat_id,
             'unit_ids': tuple(unit_ids),
         }
         response = await self.__http_client.post(url, json=request_data)
+
+        if response.status_code == 201:
+            return
+
+        response_data = decode_response_json_or_raise_error(response)
+
+        match response_data:
+            case {'message': 'Chat by chat ID is not found'}:
+                raise exceptions.UserNotFoundError
 
     async def get_report_route_units(
             self,
@@ -326,6 +335,7 @@ class DatabaseAPIService:
             self,
             *,
             report_type_id: int,
+            user_chat_id: int,
             chat_id: int,
             unit_ids: Iterable[int],
     ):
@@ -333,6 +343,7 @@ class DatabaseAPIService:
         request_query_params = {
             'report_type_id': report_type_id,
             'chat_id': chat_id,
+            'user_chat_id': user_chat_id,
             'unit_ids': tuple(unit_ids),
         }
         response = await self.__http_client.delete(

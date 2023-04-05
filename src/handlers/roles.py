@@ -1,7 +1,5 @@
-from typing import Callable
 import asyncio
 
-import httpx
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text, Command
@@ -11,12 +9,12 @@ from aiogram.types import (
 )
 
 from core import exceptions
-from services.mappers import group_units_by_region
 from services.database_api import DatabaseAPIService
 from services.http_client_factory import HTTPClientFactory
-from shortcuts import answer_views, edit_message_by_view, get_message
-from views import RoleMenuView
+from services.mappers import group_units_by_region
+from shortcuts import answer_views, get_message
 from utils.states import SetUserRoleStates
+from views import RoleMenuView
 
 
 async def on_user_has_no_role_error(
@@ -73,17 +71,10 @@ async def set_user_role(
     access_code = message.text
     async with database_api_http_client_factory() as http_client:
         database_api_service = DatabaseAPIService(http_client)
-        try:
-            await database_api_service.set_user_role(
-                chat_id=message.from_user.id,
-                access_code=access_code,
-            )
-        except exceptions.UserNotFoundError:
-            await database_api_service.create_chat(message.chat)
-            await database_api_service.set_user_role(
-                chat_id=message.from_user.id,
-                access_code=access_code,
-            )
+        await database_api_service.set_user_role(
+            chat_id=message.from_user.id,
+            access_code=access_code,
+        )
 
     markup = InlineKeyboardMarkup(
         inline_keyboard=[
