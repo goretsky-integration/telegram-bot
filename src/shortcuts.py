@@ -1,17 +1,15 @@
 import asyncio
-from typing import TypeVar, Iterable, Collection
+from typing import TypeVar, Iterable
 
 from aiogram.types import Message, CallbackQuery, Update
 
 import models.api_responses.database as database_models
-from core import exceptions
 from views.base import BaseView
 
 __all__ = (
     'answer_views',
     'flatten',
     'get_message',
-    'validate_report_routes',
     'filter_units_by_ids',
     'edit_message_by_view',
 )
@@ -33,11 +31,6 @@ async def edit_message_by_view(message: Message, view: BaseView) -> Message:
 def flatten(nested: Iterable[Iterable[T]]) -> list[T]:
     return [item for items in nested
             for item in items]
-
-
-def validate_report_routes(reports: Collection[database_models.ReportRoute]):
-    if not reports or not reports[0].unit_ids:
-        raise exceptions.NoEnabledUnitsError
 
 
 def get_message(query: Message | CallbackQuery | Update) -> Message:

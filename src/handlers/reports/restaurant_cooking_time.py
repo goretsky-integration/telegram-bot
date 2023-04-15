@@ -11,7 +11,7 @@ from services.converters import UnitsConverter, to_restaurant_cooking_time_stati
 from services.database_api import DatabaseAPIService
 from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
 from services.http_client_factory import HTTPClientFactory
-from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
+from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
 from views import RestaurantCookingTimeStatisticsView
 

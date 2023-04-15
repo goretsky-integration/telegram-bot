@@ -21,8 +21,7 @@ from services.dodo_api import (
 )
 from services.http_client_factory import HTTPClientFactory
 from shortcuts import (
-    answer_views, get_message, filter_units_by_ids, flatten,
-    validate_report_routes
+    answer_views, get_message, filter_units_by_ids, flatten
 )
 from utils.callback_data import show_statistics
 from views import HeatedShelfTimeStatisticsView
