@@ -6,19 +6,19 @@ from aiogram.dispatcher.filters import Command
 
 from core import exceptions
 from models import Query
-from services.converters import UnitsConverter, to_total_cooking_time_statistics_view_dto
+from services.converters import UnitsConverter, to_delivery_cooking_time_statistics_view_dto
 from services.dodo_api import DodoAPIService, get_v1_statistics_reports_batch
 from services.database_api import DatabaseAPIService
 from services.auth_api import AuthAPIService, get_cookies_batch
 from services.http_client_factory import HTTPClientFactory
 from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
-from views import TotalCookingTimeStatisticsView
+from views import DeliveryCookingTimeStatisticsView
 
 __all__ = ('register_handlers',)
 
 
-async def on_total_cooking_time_statistics_report(
+async def on_delivery_cooking_time_statistics_report(
         query: Query,
         dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
@@ -62,17 +62,17 @@ async def on_total_cooking_time_statistics_report(
             units_grouped_by_account_name=units.grouped_by_office_manager_account_name,
             accounts_cookies=accounts_cookies,
         )
-    kitchen_productivity_statistics = to_total_cooking_time_statistics_view_dto(reports, units.unit_id_to_name)
-    view = TotalCookingTimeStatisticsView(kitchen_productivity_statistics)
+    kitchen_productivity_statistics = to_delivery_cooking_time_statistics_view_dto(reports, units.unit_id_to_name)
+    view = DeliveryCookingTimeStatisticsView(kitchen_productivity_statistics)
     await answer_views(report_message, view, edit=True)
 
 
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(
-        on_total_cooking_time_statistics_report,
-        Command('cooking_time'),
+        on_delivery_cooking_time_statistics_report,
+        Command('delivery_cooking_time'),
     )
     dispatcher.register_callback_query_handler(
-        on_total_cooking_time_statistics_report,
-        show_statistics.filter(report_type_name='COOKING_TIME'),
+        on_delivery_cooking_time_statistics_report,
+        show_statistics.filter(report_type_name='DELIVERY_COOKING_TIME'),
     )

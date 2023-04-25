@@ -8,4 +8,4 @@ from .late_delivery_vouchers import *
 from .productivity_balance import *
 from .restaurant_cooking_time import *
 from .revenue import *
-from .total_cooking_time import *
+from .delivery_cooking_time import *
