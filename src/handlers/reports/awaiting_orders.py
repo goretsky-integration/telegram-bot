@@ -11,7 +11,7 @@ from services.dodo_api import DodoAPIService, get_v1_statistics_reports_batch
 from services.database_api import DatabaseAPIService
 from services.auth_api import AuthAPIService, get_cookies_batch
 from services.http_client_factory import HTTPClientFactory
-from shortcuts import answer_views, get_message, filter_units_by_ids, validate_report_routes
+from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
 from views import AwaitingOrdersStatisticsView
 
@@ -35,7 +35,7 @@ async def on_awaiting_orders_statistics_report(
             name='STATISTICS'
         )
         enabled_unit_ids = await database_api_service.get_report_route_units(
-            chat_id=query.from_user.id,
+            chat_id=message.chat.id,
             report_type_id=report_type.id,
         )
         if not enabled_unit_ids:

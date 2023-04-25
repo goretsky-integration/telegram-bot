@@ -37,7 +37,7 @@ async def on_delivery_productivity_statistics_report(
             name='STATISTICS'
         )
         enabled_unit_ids = await database_api_service.get_report_route_units(
-            chat_id=query.from_user.id,
+            chat_id=message.chat.id,
             report_type_id=report_type.id,
         )
         if not enabled_unit_ids:

@@ -4,12 +4,12 @@
     "description": "Бонусная система"
   },
   {
-    "command": "cooking_time",
-    "description": "Время приготовления (общее)"
+    "command": "delivery_cooking_time",
+    "description": "Время приготовления на доставку"
   },
   {
     "command": "restaurant_cooking_time",
-    "description": "Время приготовления (ресторан)"
+    "description": "Время приготовления в ресторане"
   },
   {
     "command": "daily_revenue",

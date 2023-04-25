@@ -22,6 +22,7 @@ async def on_daily_revenue_statistics_report(
         dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
 ) -> None:
+    message = get_message(query)
     async with database_api_http_client_factory() as http_client:
         database_api_service = DatabaseAPIService(http_client)
 
@@ -32,13 +33,13 @@ async def on_daily_revenue_statistics_report(
             chat_id=query.from_user.id,
         )
         unit_ids = await database_api_service.get_report_route_units(
-            chat_id=query.from_user.id,
+            chat_id=message.chat.id,
             report_type_id=report_type.id,
         )
     if not unit_ids:
         raise exceptions.NoEnabledUnitsError
 
-    report_message = await get_message(query).answer('Загрузка...')
+    report_message = await message.answer('Загрузка...')
 
     async with dodo_api_http_client_factory() as http_client:
         dodo_api_service = DodoAPIService(http_client, country_code)
