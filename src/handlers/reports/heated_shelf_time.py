@@ -1,28 +1,27 @@
 import asyncio
-import logging
+from zoneinfo import ZoneInfo
 
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
 
 from core import exceptions
 from models import Query
-from services.auth_api import (
-    AuthAPIService, get_tokens_batch,
-    get_cookies_batch
-)
+from services.auth_api import AuthAPIService, get_tokens_batch
 from services.converters import (
     UnitsConverter,
     to_heated_shelf_time_statistics_view_dto
 )
 from services.database_api import DatabaseAPIService
 from services.dodo_api import (
-    DodoAPIService, get_v2_statistics_reports_batch,
-    get_v1_statistics_reports_batch
+    DodoAPIService,
+    get_v2_statistics_reports_batch,
+    get_courier_orders,
 )
+from services.domain.orders import calculate_trips_with_one_order_percentage
 from services.http_client_factory import HTTPClientFactory
-from shortcuts import (
-    answer_views, get_message, filter_units_by_ids, flatten
-)
+from services.mappers import group_by_unit_uuid
+from services.period import Period
+from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
 from views import HeatedShelfTimeStatisticsView
 
@@ -36,6 +35,7 @@ async def on_heated_shelf_time_statistics_report(
         auth_api_http_client_factory: HTTPClientFactory,
         country_code: str,
 ):
+    period = Period.today_to_this_time(timezone=ZoneInfo('Europe/Moscow'))
     message = get_message(query)
 
     report_message = await message.answer('Загрузка')
@@ -60,31 +60,23 @@ async def on_heated_shelf_time_statistics_report(
 
     async with auth_api_http_client_factory() as http_client:
         auth_api_service = AuthAPIService(http_client)
-        async with asyncio.TaskGroup() as task_group:
-            accounts_cookies = task_group.create_task(
-                get_cookies_batch(
-                    auth_api_service=auth_api_service,
-                    account_names=units.office_manager_account_names,
-                )
-            )
-            accounts_tokens = task_group.create_task(
-                get_tokens_batch(
-                    auth_api_service=auth_api_service,
-                    account_names=units.dodo_is_api_account_names,
-                )
-            )
-    accounts_tokens = accounts_tokens.result()
-    accounts_cookies = accounts_cookies.result()
+        accounts_tokens = await get_tokens_batch(
+            auth_api_service=auth_api_service,
+            account_names=units.dodo_is_api_account_names,
+
+        )
 
     async with dodo_api_http_client_factory() as http_client:
         dodo_api_service = DodoAPIService(http_client,
                                           country_code=country_code)
+
         async with asyncio.TaskGroup() as task_group:
-            trips_with_one_order_reports = task_group.create_task(
-                get_v1_statistics_reports_batch(
-                    api_method=dodo_api_service.get_trips_with_one_order_statistics_report,
-                    units_grouped_by_account_name=units.grouped_by_office_manager_account_name,
-                    accounts_cookies=accounts_cookies,
+            courier_orders = task_group.create_task(
+                get_courier_orders(
+                    period=period,
+                    units=units,
+                    country_code=country_code,
+                    dodo_is_api_credentials=accounts_tokens,
                 )
             )
             heated_shelf_time_reports = task_group.create_task(
@@ -94,9 +86,19 @@ async def on_heated_shelf_time_statistics_report(
                     accounts_tokens=accounts_tokens,
                 )
             )
+
+    courier_orders = courier_orders.result()
+    heated_shelf_time_reports = heated_shelf_time_reports.result()
+
+    unit_uuid_to_courier_orders = group_by_unit_uuid(courier_orders)
+    unit_uuid_to_trips_with_one_order_percentage = {
+        unit_uuid: calculate_trips_with_one_order_percentage(courier_orders)
+        for unit_uuid, courier_orders in unit_uuid_to_courier_orders.items()
+    }
+
     units_heated_shelf_time_statistics = to_heated_shelf_time_statistics_view_dto(
-        heated_shelf_time_statistics=heated_shelf_time_reports.result(),
-        trips_with_one_order_statistics=flatten(trips_with_one_order_reports.result()),
+        heated_shelf_time_statistics=heated_shelf_time_reports,
+        unit_uuid_to_trips_with_one_order_percentage=unit_uuid_to_trips_with_one_order_percentage,
         unit_uuid_to_name=units.unit_uuid_to_name,
     )
     view = HeatedShelfTimeStatisticsView(units_heated_shelf_time_statistics)
