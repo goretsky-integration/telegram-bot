@@ -1,5 +1,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import TypeVar, Protocol
+from uuid import UUID
 
 from aiogram.types import User, Chat
 
@@ -48,3 +50,21 @@ def map_chat_to_create_dto(chat: Chat) -> ChatToCreate:
         username=chat.username,
         type=chat_type,
     )
+
+
+class HasUnitUUID(Protocol):
+    unit_uuid: UUID
+
+
+ItemWithUnitUUIDT = TypeVar('ItemWithUnitUUIDT', bound=HasUnitUUID)
+
+
+def group_by_unit_uuid(
+        items: Iterable[ItemWithUnitUUIDT],
+) -> dict[UUID, list[ItemWithUnitUUIDT]]:
+    unit_uuid_to_items: defaultdict[UUID, list[ItemWithUnitUUIDT]] = (
+        defaultdict(list)
+    )
+    for item in items:
+        unit_uuid_to_items[item.unit_uuid].append(item)
+    return dict(unit_uuid_to_items)
