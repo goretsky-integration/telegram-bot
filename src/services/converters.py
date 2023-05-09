@@ -1,7 +1,7 @@
 import collections
 import functools
 from dataclasses import dataclass
-from typing import Iterable, Self
+from typing import Iterable, Self, Mapping
 from uuid import UUID
 
 import models.api_responses.database as database_models
@@ -40,18 +40,17 @@ def to_bonus_system_statistics_view_dto(
 def to_heated_shelf_time_statistics_view_dto(
         heated_shelf_time_statistics: Iterable[
             api_models.UnitHeatedShelfTimeStatisticsReport],
-        trips_with_one_order_statistics: Iterable[
-            api_models.UnitTripsWithOneOrderStatisticsReport],
-        unit_uuid_to_name: dict[UUID, str],
+        unit_uuid_to_trips_with_one_order_percentage: Mapping[UUID, int],
+        unit_uuid_to_name: Mapping[UUID, str],
 ) -> list[view_models.UnitHeatedShelfTimeStatisticsViewDTO]:
-    unit_name_to_percentage = {unit.unit_name: unit.percentage for unit in
-                               trips_with_one_order_statistics}
     return [
         view_models.UnitHeatedShelfTimeStatisticsViewDTO(
             unit_name=unit_uuid_to_name[unit.unit_uuid],
             average_heated_shelf_time_in_seconds=unit.average_heated_shelf_time,
-            trips_with_one_order_percentage=unit_name_to_percentage.get(
-                unit_uuid_to_name[unit.unit_uuid], 0),
+            trips_with_one_order_percentage=(
+                unit_uuid_to_trips_with_one_order_percentage
+                .get(unit.unit_uuid, 0)
+            ),
         ) for unit in heated_shelf_time_statistics
     ]
 
