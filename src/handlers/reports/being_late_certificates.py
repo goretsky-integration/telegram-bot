@@ -1,15 +1,21 @@
 import asyncio
-import logging
 
+import httpx
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
+from dodo_is_api import models as dodo_is_api_models
 
 from core import exceptions
 from models import Query
 from services.auth_api import AuthAPIService, get_tokens_batch
-from services.converters import UnitsConverter, to_late_delivery_vouchers_statistics_view_dto
+from services.converters import UnitsConverter
 from services.database_api import DatabaseAPIService
-from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
+from services.dodo_api import (
+    get_late_delivery_vouchers_for_today_and_week_before
+)
+from services.domain.vouchers import (
+    calculate_late_delivery_vouchers_count_for_today_and_week_before,
+)
 from services.http_client_factory import HTTPClientFactory
 from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
@@ -20,10 +26,9 @@ __all__ = ('register_handlers',)
 
 async def on_being_late_certificates_statistics_report(
         query: Query,
-        dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
         auth_api_http_client_factory: HTTPClientFactory,
-        country_code: str,
+        country_code: dodo_is_api_models.CountryCode,
 ):
     message = get_message(query)
 
@@ -54,16 +59,26 @@ async def on_being_late_certificates_statistics_report(
             account_names=units.dodo_is_api_account_names,
         )
 
-    async with dodo_api_http_client_factory() as http_client:
-        dodo_api_service = DodoAPIService(http_client, country_code=country_code)
-        reports = await get_v2_statistics_reports_batch(
-            api_method=dodo_api_service.get_late_delivery_vouchers_statistics_report,
-            units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
-            accounts_tokens=accounts_tokens,
+    async with httpx.AsyncClient() as http_client:
+        vouchers_for_today, vouchers_for_week_before = (
+            await get_late_delivery_vouchers_for_today_and_week_before(
+                units=units,
+                country_code=country_code,
+                http_client=http_client,
+                dodo_is_api_credentials=accounts_tokens,
+            )
         )
 
-    late_delivery_vouchers_statistics = to_late_delivery_vouchers_statistics_view_dto(reports, units.unit_uuid_to_name)
-    view = BeingLateCertificatesStatisticsView(late_delivery_vouchers_statistics)
+    units_late_delivery_vouchers_for_today_and_week_before = (
+        calculate_late_delivery_vouchers_count_for_today_and_week_before(
+            unit_uuid_to_name=units.unit_uuid_to_name,
+            vouchers_for_today=vouchers_for_today,
+            vouchers_for_week_before=vouchers_for_week_before,
+        )
+    )
+    view = BeingLateCertificatesStatisticsView(
+        units_late_delivery_vouchers_for_today_and_week_before,
+    )
     await answer_views(report_message, view, edit=True)
 
 
