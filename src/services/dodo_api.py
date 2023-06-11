@@ -1,12 +1,12 @@
 import asyncio
 import datetime
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, TypeAlias
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
-import dodo_is_api.models as dodo_is_api_models
+import httpx
+from dodo_is_api import models as dodo_is_api_models
 from dodo_is_api.connection import AsyncDodoISAPIConnection
-from dodo_is_api.connection.http_clients import closing_async_httpx_client
-from dodo_is_api.mappers import map_courier_order_dto
 from pydantic import parse_obj_as
 
 import models.api_responses.auth as auth_models
@@ -22,9 +22,18 @@ __all__ = (
     'get_v2_statistics_reports_batch',
     'get_bonus_system_statistics_reports_batch',
     'get_courier_orders',
+    'get_late_delivery_vouchers',
+    'get_late_delivery_vouchers_for_today_and_week_before',
 )
 
 from services.period import Period
+from shortcuts import flatten
+
+TIMEZONE = ZoneInfo('Europe/Moscow')
+
+LateDeliveryVouchersList: TypeAlias = (
+    list[dodo_is_api_models.LateDeliveryVoucher]
+)
 
 
 class DodoAPIService:
@@ -324,3 +333,77 @@ async def get_courier_orders(
         for task in tasks
         for courier_order in task.result()
     ]
+
+
+async def get_late_delivery_vouchers_for_time_period(
+        period: Period,
+        units: UnitsConverter,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
+        dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
+):
+    units_grouped_by_account_name = units.grouped_by_dodo_is_api_account_name
+    account_name_to_access_token = {
+        credentials.account_name: credentials.access_token
+        for credentials in dodo_is_api_credentials
+    }
+
+    tasks: list[asyncio.Task] = []
+    async with asyncio.TaskGroup() as task_group:
+
+        for account_name, units_group in units_grouped_by_account_name.items():
+            access_token = account_name_to_access_token[account_name]
+
+            connection = AsyncDodoISAPIConnection(
+                http_client=http_client,
+                country_code=country_code,
+                access_token=access_token,
+            )
+
+            tasks.append(
+                task_group.create_task(
+                    connection.get_late_delivery_vouchers(
+                        from_date=period.start,
+                        to_date=period.end,
+                        units=units_group.uuids,
+                    )
+                )
+            )
+
+    vouchers: list[LateDeliveryVouchersList] = [task.result() for task in tasks]
+    return flatten(vouchers)
+
+
+async def get_late_delivery_vouchers_for_today_and_week_before(
+        units: UnitsConverter,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
+        dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
+) -> tuple[LateDeliveryVouchersList, LateDeliveryVouchersList]:
+    period_today = Period.today_to_this_time(timezone=TIMEZONE)
+    period_week_before = Period.week_before_to_this_time(timezone=TIMEZONE)
+
+    async with asyncio.TaskGroup() as task_group:
+        today_vouchers_task = task_group.create_task(
+            get_late_delivery_vouchers_for_time_period(
+                period=period_today,
+                units=units,
+                http_client=http_client,
+                country_code=country_code,
+                dodo_is_api_credentials=dodo_is_api_credentials,
+            ),
+        )
+        week_before_vouchers_task = task_group.create_task(
+            get_late_delivery_vouchers_for_time_period(
+                period=period_week_before,
+                units=units,
+                http_client=http_client,
+                country_code=country_code,
+                dodo_is_api_credentials=dodo_is_api_credentials,
+            ),
+        )
+
+    today_late_delivery_vouchers = today_vouchers_task.result()
+    week_before_late_delivery_vouchers = week_before_vouchers_task.result()
+
+    return today_late_delivery_vouchers, week_before_late_delivery_vouchers
