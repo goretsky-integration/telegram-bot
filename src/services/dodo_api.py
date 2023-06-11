@@ -22,7 +22,7 @@ __all__ = (
     'get_v2_statistics_reports_batch',
     'get_bonus_system_statistics_reports_batch',
     'get_courier_orders',
-    'get_late_delivery_vouchers',
+    'get_late_delivery_vouchers_for_time_period',
     'get_late_delivery_vouchers_for_today_and_week_before',
 )
 
@@ -31,9 +31,8 @@ from shortcuts import flatten
 
 TIMEZONE = ZoneInfo('Europe/Moscow')
 
-LateDeliveryVouchersList: TypeAlias = (
-    list[dodo_is_api_models.LateDeliveryVoucher]
-)
+CourierOrders: TypeAlias = list[dodo_is_api_models.CourierOrder]
+LateDeliveryVouchers: TypeAlias = list[dodo_is_api_models.LateDeliveryVoucher]
 
 
 class DodoAPIService:
@@ -279,35 +278,12 @@ async def get_v2_statistics_reports_batch(
     return [result for task in tasks for result in task.result()]
 
 
-async def request_courier_orders_from_dodo_is_api(
-        period: Period,
-        unit_uuids: Iterable[UUID],
-        access_token: str,
-        country_code: str,
-) -> list[dodo_is_api_models.CourierOrder]:
-    async with closing_async_httpx_client(
-            access_token=access_token,
-            country_code=country_code,
-    ) as http_client:
-        connection = AsyncDodoISAPIConnection(http_client=http_client)
-        courier_orders_iterator = connection.iter_courier_orders(
-            from_date=period.start + datetime.timedelta(hours=3),
-            to_date=period.end + datetime.timedelta(hours=3),
-            units=unit_uuids,
-        )
-
-        return [
-            map_courier_order_dto(courier_order)
-            async for courier_orders in courier_orders_iterator
-            for courier_order in courier_orders
-        ]
-
-
 async def get_courier_orders(
         *,
         period: Period,
         units: UnitsConverter,
-        country_code: str,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
         dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
 ) -> list[dodo_is_api_models.CourierOrder]:
     units_grouped_by_account_name = units.grouped_by_dodo_is_api_account_name
@@ -316,23 +292,33 @@ async def get_courier_orders(
         for credentials in dodo_is_api_credentials
     }
 
-    async with asyncio.TaskGroup() as task_group:
-        tasks = [
-            task_group.create_task(
-                request_courier_orders_from_dodo_is_api(
-                    period=period,
-                    unit_uuids=units.uuids,
-                    country_code=country_code,
-                    access_token=account_name_to_access_token[account_name],
-                )
-            ) for account_name, units in units_grouped_by_account_name.items()
-        ]
+    from_date = period.start + datetime.timedelta(hours=3)
+    to_date = period.end + datetime.timedelta(hours=3)
 
-    return [
-        courier_order
-        for task in tasks
-        for courier_order in task.result()
-    ]
+    tasks: list[asyncio.Task] = []
+    async with asyncio.TaskGroup() as task_group:
+
+        for account_name, units_group in units_grouped_by_account_name.items():
+            access_token = account_name_to_access_token[account_name]
+
+            connection = AsyncDodoISAPIConnection(
+                http_client=http_client,
+                country_code=country_code,
+                access_token=access_token,
+            )
+
+            tasks.append(
+                task_group.create_task(
+                    connection.get_courier_orders(
+                        from_date=from_date,
+                        to_date=to_date,
+                        units=units_group.uuids,
+                    )
+                )
+            )
+
+    couriers_orders: list[CourierOrders] = [task.result() for task in tasks]
+    return flatten(couriers_orders)
 
 
 async def get_late_delivery_vouchers_for_time_period(
@@ -370,7 +356,7 @@ async def get_late_delivery_vouchers_for_time_period(
                 )
             )
 
-    vouchers: list[LateDeliveryVouchersList] = [task.result() for task in tasks]
+    vouchers: list[LateDeliveryVouchers] = [task.result() for task in tasks]
     return flatten(vouchers)
 
 
@@ -379,7 +365,7 @@ async def get_late_delivery_vouchers_for_today_and_week_before(
         http_client: httpx.AsyncClient,
         country_code: dodo_is_api_models.CountryCode,
         dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
-) -> tuple[LateDeliveryVouchersList, LateDeliveryVouchersList]:
+) -> tuple[LateDeliveryVouchers, LateDeliveryVouchers]:
     period_today = Period.today_to_this_time(timezone=TIMEZONE)
     period_week_before = Period.week_before_to_this_time(timezone=TIMEZONE)
 

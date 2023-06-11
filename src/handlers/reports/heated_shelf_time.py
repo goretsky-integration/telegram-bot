@@ -1,8 +1,10 @@
 import asyncio
 from zoneinfo import ZoneInfo
 
+import httpx
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
+from dodo_is_api import models as dodo_is_api_models
 
 from core import exceptions
 from models import Query
@@ -33,7 +35,7 @@ async def on_heated_shelf_time_statistics_report(
         dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
         auth_api_http_client_factory: HTTPClientFactory,
-        country_code: str,
+        country_code: dodo_is_api_models.CountryCode,
 ):
     period = Period.today_to_this_time(timezone=ZoneInfo('Europe/Moscow'))
     message = get_message(query)
@@ -66,26 +68,30 @@ async def on_heated_shelf_time_statistics_report(
 
         )
 
-    async with dodo_api_http_client_factory() as http_client:
-        dodo_api_service = DodoAPIService(http_client,
-                                          country_code=country_code)
+    async with dodo_api_http_client_factory() as dodo_api_http_client:
+        async with httpx.AsyncClient(timeout=30) as dodo_is_api_http_client:
+            dodo_api_service = DodoAPIService(
+                http_client=dodo_api_http_client,
+                country_code=country_code,
+            )
 
-        async with asyncio.TaskGroup() as task_group:
-            courier_orders = task_group.create_task(
-                get_courier_orders(
-                    period=period,
-                    units=units,
-                    country_code=country_code,
-                    dodo_is_api_credentials=accounts_tokens,
+            async with asyncio.TaskGroup() as task_group:
+                courier_orders = task_group.create_task(
+                    get_courier_orders(
+                        period=period,
+                        units=units,
+                        http_client=dodo_is_api_http_client,
+                        country_code=country_code,
+                        dodo_is_api_credentials=accounts_tokens,
+                    )
                 )
-            )
-            heated_shelf_time_reports = task_group.create_task(
-                get_v2_statistics_reports_batch(
-                    api_method=dodo_api_service.get_heated_shelf_time_statistics_report,
-                    units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
-                    accounts_tokens=accounts_tokens,
+                heated_shelf_time_reports = task_group.create_task(
+                    get_v2_statistics_reports_batch(
+                        api_method=dodo_api_service.get_heated_shelf_time_statistics_report,
+                        units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
+                        accounts_tokens=accounts_tokens,
+                    )
                 )
-            )
 
     courier_orders = courier_orders.result()
     heated_shelf_time_reports = heated_shelf_time_reports.result()
