@@ -1,8 +1,7 @@
 from aiogram import Dispatcher
 
 from . import (
-    delivery_cooking_time,
-    restaurant_cooking_time,
+    cooking_time,
     kitchen_productivity,
     heated_shelf_time,
     delivery_speed,
@@ -19,8 +18,7 @@ __all__ = ('register_handlers',)
 
 def register_handlers(dispatcher: Dispatcher):
     modules = (
-        delivery_cooking_time,
-        restaurant_cooking_time,
+        cooking_time,
         kitchen_productivity,
         heated_shelf_time,
         delivery_speed,

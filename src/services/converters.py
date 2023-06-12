@@ -1,9 +1,8 @@
 import collections
 import functools
 from dataclasses import dataclass
-from typing import Iterable, Self, Mapping, TypeAlias
+from typing import Iterable, Self, Mapping
 from uuid import UUID
-
 
 import models.api_responses.database as database_models
 import models.api_responses.dodo as api_models
@@ -15,14 +14,12 @@ __all__ = (
     'to_awaiting_orders_statistics_view_dto',
     'to_kitchen_productivity_statistics_view_dto',
     'to_delivery_speed_statistics_view_dto',
-    'to_restaurant_cooking_time_statistics_view_dto',
-    'to_productivity_balance_statistics_view_dto',
-    'to_delivery_productivity_statistics_view_dto',
     'to_delivery_cooking_time_statistics_view_dto',
+    'to_delivery_productivity_statistics_view_dto',
+    'to_productivity_balance_statistics_view_dto',
     'to_heated_shelf_time_statistics_view_dto',
     'to_bonus_system_statistics_view_dto',
 )
-
 
 
 def to_bonus_system_statistics_view_dto(
@@ -102,19 +99,6 @@ def to_productivity_balance_statistics_view_dto(
             sales_per_labor_hour=unit.sales_per_labor_hour,
             orders_per_labor_hour=unit.orders_per_labor_hour,
         ) for unit in units_productivity_balance_statistics
-    ]
-
-
-def to_restaurant_cooking_time_statistics_view_dto(
-        units_restaurant_cooking_time_statistics: Iterable[
-            api_models.UnitRestaurantCookingTimeStatisticsReport],
-        unit_uuid_to_name: dict[UUID, str],
-) -> list[view_models.UnitRestaurantCookingTimeStatisticsViewDTO]:
-    return [
-        view_models.UnitRestaurantCookingTimeStatisticsViewDTO(
-            unit_name=unit_uuid_to_name[unit.unit_uuid],
-            average_tracking_pending_and_cooking_time=unit.average_tracking_pending_and_cooking_time,
-        ) for unit in units_restaurant_cooking_time_statistics
     ]
 
 

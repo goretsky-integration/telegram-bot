@@ -16,17 +16,41 @@ from services.http_client_factory import HTTPClientFactory
 from services.period import Period
 from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
-from views import RestaurantCookingTimeStatisticsView
+from views import (
+    DeliveryCookingTimeStatisticsView,
+    RestaurantCookingTimeStatisticsView,
+)
 
 
-async def on_restaurant_cooking_time_statistics_report(
+report_type_name_to_sales_channel = {
+    'delivery_cooking_time': dodo_is_api_models.SalesChannel.DELIVERY,
+    'restaurant_cooking_time': dodo_is_api_models.SalesChannel.DINE_IN,
+}
+
+report_type_name_to_view = {
+    'delivery_cooking_time': DeliveryCookingTimeStatisticsView,
+    'restaurant_cooking_time': RestaurantCookingTimeStatisticsView,
+}
+
+
+async def on_cooking_time_statistics_report(
         query: Query,
         dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
         auth_api_http_client_factory: HTTPClientFactory,
         country_code: dodo_is_api_models.CountryCode,
+        callback_data: dict | None = None,
+        command: Command | None = None,
 ):
     message = get_message(query)
+
+    if command is not None:
+        report_type_name = command.command
+    else:
+        report_type_name = callback_data['report_type_name'].lower()
+
+    sales_channel = report_type_name_to_sales_channel[report_type_name]
+    view_class = report_type_name_to_view[report_type_name]
 
     report_message = await message.answer('Загрузка')
 
@@ -62,23 +86,28 @@ async def on_restaurant_cooking_time_statistics_report(
             http_client=http_client,
             country_code=country_code,
             dodo_is_api_credentials=accounts_tokens,
-            sales_channels=[dodo_is_api_models.SalesChannel.DINE_IN],
+            sales_channels=[sales_channel],
         )
 
     units_cooking_time_statistics = calculate_tracking_pending_and_cooking_time(
         unit_names=units.names,
         units_statistics=units_statistics,
     )
-    view = RestaurantCookingTimeStatisticsView(units_cooking_time_statistics)
+    view = view_class(units_cooking_time_statistics)
     await answer_views(report_message, view, edit=True)
 
 
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(
-        on_restaurant_cooking_time_statistics_report,
-        Command('restaurant_cooking_time'),
+        on_cooking_time_statistics_report,
+        Command(('delivery_cooking_time', 'restaurant_cooking_time')),
     )
     dispatcher.register_callback_query_handler(
-        on_restaurant_cooking_time_statistics_report,
-        show_statistics.filter(report_type_name='RESTAURANT_COOKING_TIME'),
+        on_cooking_time_statistics_report,
+        show_statistics.filter(
+            report_type_name=(
+                'DELIVERY_COOKING_TIME',
+                'RESTAURANT_COOKING_TIME',
+            ),
+        ),
     )

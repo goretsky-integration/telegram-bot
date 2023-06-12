@@ -34,7 +34,7 @@ class Period:
                 second=now.second,
                 microsecond=now.microsecond,
                 tzinfo=timezone,
-            )
+            ) + timedelta(hours=3)
         )
 
     @classmethod
