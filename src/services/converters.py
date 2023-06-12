@@ -14,11 +14,9 @@ __all__ = (
     'to_awaiting_orders_statistics_view_dto',
     'to_kitchen_productivity_statistics_view_dto',
     'to_delivery_speed_statistics_view_dto',
-    'to_late_delivery_vouchers_statistics_view_dto',
-    'to_restaurant_cooking_time_statistics_view_dto',
-    'to_productivity_balance_statistics_view_dto',
-    'to_delivery_productivity_statistics_view_dto',
     'to_delivery_cooking_time_statistics_view_dto',
+    'to_delivery_productivity_statistics_view_dto',
+    'to_productivity_balance_statistics_view_dto',
     'to_heated_shelf_time_statistics_view_dto',
     'to_bonus_system_statistics_view_dto',
 )
@@ -101,33 +99,6 @@ def to_productivity_balance_statistics_view_dto(
             sales_per_labor_hour=unit.sales_per_labor_hour,
             orders_per_labor_hour=unit.orders_per_labor_hour,
         ) for unit in units_productivity_balance_statistics
-    ]
-
-
-def to_restaurant_cooking_time_statistics_view_dto(
-        units_restaurant_cooking_time_statistics: Iterable[
-            api_models.UnitRestaurantCookingTimeStatisticsReport],
-        unit_uuid_to_name: dict[UUID, str],
-) -> list[view_models.UnitRestaurantCookingTimeStatisticsViewDTO]:
-    return [
-        view_models.UnitRestaurantCookingTimeStatisticsViewDTO(
-            unit_name=unit_uuid_to_name[unit.unit_uuid],
-            average_tracking_pending_and_cooking_time=unit.average_tracking_pending_and_cooking_time,
-        ) for unit in units_restaurant_cooking_time_statistics
-    ]
-
-
-def to_late_delivery_vouchers_statistics_view_dto(
-        units_late_delivery_vouchers_statistics: Iterable[
-            api_models.UnitLateDeliveryVouchersStatisticsReport],
-        unit_uuid_to_name: dict[UUID, str],
-) -> list[view_models.UnitLateDeliveryVouchersStatisticsViewDTO]:
-    return [
-        view_models.UnitLateDeliveryVouchersStatisticsViewDTO(
-            unit_name=unit_uuid_to_name[unit.unit_uuid],
-            certificates_count_today=unit.certificates_count_today,
-            certificates_count_week_before=unit.certificates_count_week_before,
-        ) for unit in units_late_delivery_vouchers_statistics
     ]
 
 

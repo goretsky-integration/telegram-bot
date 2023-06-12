@@ -5,6 +5,7 @@ import pathlib
 from aiogram import executor, Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import ParseMode
+from dodo_is_api import models as dodo_is_api_models
 
 from config import load_config, load_commands
 from handlers import register_handlers
@@ -43,9 +44,11 @@ def main():
     bot = Bot(config.bot_token, parse_mode=ParseMode.HTML)
     dp = Dispatcher(bot, storage=MemoryStorage())
 
+    country_code = dodo_is_api_models.CountryCode(config.country_code)
+
     dp.setup_middleware(
         DependencyInjectMiddleware(
-            country_code=config.country_code,
+            country_code=country_code,
             auth_api_http_client_factory=functools.partial(
                 closing_http_client_factory,
                 base_url=config.auth_api_url,

@@ -1,12 +1,12 @@
 import asyncio
 import datetime
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable, Any, TypeAlias
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
-import dodo_is_api.models as dodo_is_api_models
+import httpx
+from dodo_is_api import models as dodo_is_api_models
 from dodo_is_api.connection import AsyncDodoISAPIConnection
-from dodo_is_api.connection.http_clients import closing_async_httpx_client
-from dodo_is_api.mappers import map_courier_order_dto
 from pydantic import parse_obj_as
 
 import models.api_responses.auth as auth_models
@@ -22,9 +22,21 @@ __all__ = (
     'get_v2_statistics_reports_batch',
     'get_bonus_system_statistics_reports_batch',
     'get_courier_orders',
+    'get_late_delivery_vouchers_for_time_period',
+    'get_late_delivery_vouchers_for_today_and_week_before',
+    'get_units_orders_handover_statistics',
 )
 
 from services.period import Period
+from shortcuts import flatten
+
+TIMEZONE = ZoneInfo('Europe/Moscow')
+
+UnitsOrdersHandoverStatistics: TypeAlias = (
+    list[dodo_is_api_models.UnitOrdersHandoverStatistics]
+)
+CourierOrders: TypeAlias = list[dodo_is_api_models.CourierOrder]
+LateDeliveryVouchers: TypeAlias = list[dodo_is_api_models.LateDeliveryVoucher]
 
 
 class DodoAPIService:
@@ -115,21 +127,6 @@ class DodoAPIService:
         )
         return parse_obj_as(
             tuple[models.UnitHeatedShelfTimeStatisticsReport, ...],
-            response_data)
-
-    async def get_restaurant_cooking_time_statistics_report(
-            self,
-            *,
-            unit_uuids: Iterable[UUID],
-            access_token: str,
-    ) -> tuple[models.UnitRestaurantCookingTimeStatisticsReport, ...]:
-        response_data = await self.__get_v2_statistics_report(
-            resource='restaurant-cooking-time',
-            unit_uuids=unit_uuids,
-            access_token=access_token,
-        )
-        return parse_obj_as(
-            tuple[models.UnitRestaurantCookingTimeStatisticsReport, ...],
             response_data)
 
     async def get_productivity_balance_statistics_report(
@@ -270,57 +267,162 @@ async def get_v2_statistics_reports_batch(
     return [result for task in tasks for result in task.result()]
 
 
-async def request_courier_orders_from_dodo_is_api(
-        period: Period,
-        unit_uuids: Iterable[UUID],
-        access_token: str,
-        country_code: str,
-) -> list[dodo_is_api_models.CourierOrder]:
-    async with closing_async_httpx_client(
-            access_token=access_token,
-            country_code=country_code,
-    ) as http_client:
-        connection = AsyncDodoISAPIConnection(http_client=http_client)
-        courier_orders_iterator = connection.iter_courier_orders(
-            from_date=period.start + datetime.timedelta(hours=3),
-            to_date=period.end + datetime.timedelta(hours=3),
-            units=unit_uuids,
-        )
-
-        return [
-            map_courier_order_dto(courier_order)
-            async for courier_orders in courier_orders_iterator
-            for courier_order in courier_orders
-        ]
-
-
 async def get_courier_orders(
         *,
         period: Period,
         units: UnitsConverter,
-        country_code: str,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
         dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
-) -> list[dodo_is_api_models.CourierOrder]:
+) -> CourierOrders:
     units_grouped_by_account_name = units.grouped_by_dodo_is_api_account_name
     account_name_to_access_token = {
         credentials.account_name: credentials.access_token
         for credentials in dodo_is_api_credentials
     }
 
-    async with asyncio.TaskGroup() as task_group:
-        tasks = [
-            task_group.create_task(
-                request_courier_orders_from_dodo_is_api(
-                    period=period,
-                    unit_uuids=units.uuids,
-                    country_code=country_code,
-                    access_token=account_name_to_access_token[account_name],
-                )
-            ) for account_name, units in units_grouped_by_account_name.items()
-        ]
+    from_date = period.start + datetime.timedelta(hours=3)
+    to_date = period.end + datetime.timedelta(hours=3)
 
-    return [
-        courier_order
-        for task in tasks
-        for courier_order in task.result()
+    tasks: list[asyncio.Task] = []
+    async with asyncio.TaskGroup() as task_group:
+
+        for account_name, units_group in units_grouped_by_account_name.items():
+            access_token = account_name_to_access_token[account_name]
+
+            connection = AsyncDodoISAPIConnection(
+                http_client=http_client,
+                country_code=country_code,
+                access_token=access_token,
+            )
+
+            tasks.append(
+                task_group.create_task(
+                    connection.get_courier_orders(
+                        from_date=from_date,
+                        to_date=to_date,
+                        units=units_group.uuids,
+                    )
+                )
+            )
+
+    couriers_orders: list[CourierOrders] = [task.result() for task in tasks]
+    return flatten(couriers_orders)
+
+
+async def get_late_delivery_vouchers_for_time_period(
+        period: Period,
+        units: UnitsConverter,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
+        dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
+):
+    units_grouped_by_account_name = units.grouped_by_dodo_is_api_account_name
+    account_name_to_access_token = {
+        credentials.account_name: credentials.access_token
+        for credentials in dodo_is_api_credentials
+    }
+
+    tasks: list[asyncio.Task] = []
+    async with asyncio.TaskGroup() as task_group:
+
+        for account_name, units_group in units_grouped_by_account_name.items():
+            access_token = account_name_to_access_token[account_name]
+
+            connection = AsyncDodoISAPIConnection(
+                http_client=http_client,
+                country_code=country_code,
+                access_token=access_token,
+            )
+
+            tasks.append(
+                task_group.create_task(
+                    connection.get_late_delivery_vouchers(
+                        from_date=period.start,
+                        to_date=period.end,
+                        units=units_group.uuids,
+                    )
+                )
+            )
+
+    vouchers: list[LateDeliveryVouchers] = [task.result() for task in tasks]
+    return flatten(vouchers)
+
+
+async def get_late_delivery_vouchers_for_today_and_week_before(
+        units: UnitsConverter,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
+        dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
+) -> tuple[LateDeliveryVouchers, LateDeliveryVouchers]:
+    period_today = Period.today_to_this_time(timezone=TIMEZONE)
+    period_week_before = Period.week_before_to_this_time(timezone=TIMEZONE)
+
+    async with asyncio.TaskGroup() as task_group:
+        today_vouchers_task = task_group.create_task(
+            get_late_delivery_vouchers_for_time_period(
+                period=period_today,
+                units=units,
+                http_client=http_client,
+                country_code=country_code,
+                dodo_is_api_credentials=dodo_is_api_credentials,
+            ),
+        )
+        week_before_vouchers_task = task_group.create_task(
+            get_late_delivery_vouchers_for_time_period(
+                period=period_week_before,
+                units=units,
+                http_client=http_client,
+                country_code=country_code,
+                dodo_is_api_credentials=dodo_is_api_credentials,
+            ),
+        )
+
+    today_late_delivery_vouchers = today_vouchers_task.result()
+    week_before_late_delivery_vouchers = week_before_vouchers_task.result()
+
+    return today_late_delivery_vouchers, week_before_late_delivery_vouchers
+
+
+async def get_units_orders_handover_statistics(
+        *,
+        period: Period,
+        units: UnitsConverter,
+        http_client: httpx.AsyncClient,
+        country_code: dodo_is_api_models.CountryCode,
+        dodo_is_api_credentials: Iterable[auth_models.AccountTokens],
+        sales_channels: Iterable[dodo_is_api_models.SalesChannel],
+) -> UnitsOrdersHandoverStatistics:
+    units_grouped_by_account_name = units.grouped_by_dodo_is_api_account_name
+    account_name_to_access_token = {
+        credentials.account_name: credentials.access_token
+        for credentials in dodo_is_api_credentials
+    }
+
+    tasks: list[asyncio.Task] = []
+    async with asyncio.TaskGroup() as task_group:
+
+        for account_name, units_group in units_grouped_by_account_name.items():
+            access_token = account_name_to_access_token[account_name]
+
+            connection = AsyncDodoISAPIConnection(
+                http_client=http_client,
+                country_code=country_code,
+                access_token=access_token,
+            )
+
+            tasks.append(
+                task_group.create_task(
+                    connection.get_orders_handover_statistics(
+                        from_date=period.start,
+                        to_date=period.end,
+                        units=units_group.uuids,
+                        sales_channels=sales_channels,
+                    )
+                )
+            )
+
+    units_orders_handover_statistics: list[UnitsOrdersHandoverStatistics] = [
+        task.result() for task in tasks
     ]
+    return flatten(units_orders_handover_statistics)

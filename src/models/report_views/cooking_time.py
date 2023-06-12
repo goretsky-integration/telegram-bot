@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-__all__ = ('UnitRestaurantCookingTimeStatisticsViewDTO',)
+__all__ = ('UnitCookingTimeStatisticsViewDTO',)
 
 
 @dataclass(frozen=True, slots=True)
-class UnitRestaurantCookingTimeStatisticsViewDTO:
+class UnitCookingTimeStatisticsViewDTO:
     unit_name: str
     average_tracking_pending_and_cooking_time: int
