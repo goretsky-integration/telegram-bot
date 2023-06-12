@@ -388,14 +388,14 @@ toml = ["tomli"]
 
 [[package]]
 name = "dodo-is-api"
-version = "0.7.0"
+version = "0.7.1"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "dodo_is_api-0.7.0-py3-none-any.whl", hash = "sha256:36d42bd78bb86b2b84c99375a3578585dc31c653351733d656fc4f9645baa605"},
-    {file = "dodo_is_api-0.7.0.tar.gz", hash = "sha256:e0cdbb9d430b64f63611c750dd55c685499cf2dc21972dce4abed481555ecded"},
+    {file = "dodo_is_api-0.7.1-py3-none-any.whl", hash = "sha256:084ea99e2a396878dfb27d101a8951cf050f538b8da73f90a48044cc58ae5b0d"},
+    {file = "dodo_is_api-0.7.1.tar.gz", hash = "sha256:46d9022e513770341998bbbc4cb356d3f7dc9ed7b2a97c4899e5809893f2224a"},
 ]
 
 [package.dependencies]
@@ -1078,4 +1078,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "af2f0541fcf9dbe49eb2a8be1135e91b101771229278ef1186525b6b500ce451"
+content-hash = "ccc9d6287dcb0926a12cb202bbd109519c66007b36fcb35601e80a65bb4bacb4"
