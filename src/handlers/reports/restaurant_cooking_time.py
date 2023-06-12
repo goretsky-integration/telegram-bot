@@ -1,16 +1,19 @@
-import asyncio
-import logging
-
+import httpx
 from aiogram import Dispatcher
 from aiogram.dispatcher.filters import Command
+from dodo_is_api import models as dodo_is_api_models
 
 from core import exceptions
 from models import Query
 from services.auth_api import AuthAPIService, get_tokens_batch
-from services.converters import UnitsConverter, to_restaurant_cooking_time_statistics_view_dto
+from services.converters import UnitsConverter
 from services.database_api import DatabaseAPIService
-from services.dodo_api import DodoAPIService, get_v2_statistics_reports_batch
+from services.dodo_api import get_units_orders_handover_statistics
+from services.domain.handover_time import (
+    calculate_tracking_pending_and_cooking_time,
+)
 from services.http_client_factory import HTTPClientFactory
+from services.period import Period
 from shortcuts import answer_views, get_message, filter_units_by_ids
 from utils.callback_data import show_statistics
 from views import RestaurantCookingTimeStatisticsView
@@ -21,7 +24,7 @@ async def on_restaurant_cooking_time_statistics_report(
         dodo_api_http_client_factory: HTTPClientFactory,
         database_api_http_client_factory: HTTPClientFactory,
         auth_api_http_client_factory: HTTPClientFactory,
-        country_code: str,
+        country_code: dodo_is_api_models.CountryCode,
 ):
     message = get_message(query)
 
@@ -52,16 +55,21 @@ async def on_restaurant_cooking_time_statistics_report(
             account_names=units.dodo_is_api_account_names,
         )
 
-    async with dodo_api_http_client_factory() as http_client:
-        dodo_api_service = DodoAPIService(http_client,
-                                          country_code=country_code)
-        reports = await get_v2_statistics_reports_batch(
-            api_method=dodo_api_service.get_restaurant_cooking_time_statistics_report,
-            units_grouped_by_account_name=units.grouped_by_dodo_is_api_account_name,
-            accounts_tokens=accounts_tokens,
+    async with httpx.AsyncClient(timeout=30) as http_client:
+        units_statistics = await get_units_orders_handover_statistics(
+            period=Period.today_to_this_time(),
+            units=units,
+            http_client=http_client,
+            country_code=country_code,
+            dodo_is_api_credentials=accounts_tokens,
+            sales_channels=[dodo_is_api_models.SalesChannel.DINE_IN],
         )
-    units_delivery_speed_statistics = to_restaurant_cooking_time_statistics_view_dto(reports, units.unit_uuid_to_name)
-    view = RestaurantCookingTimeStatisticsView(units_delivery_speed_statistics)
+
+    units_cooking_time_statistics = calculate_tracking_pending_and_cooking_time(
+        unit_names=units.names,
+        units_statistics=units_statistics,
+    )
+    view = RestaurantCookingTimeStatisticsView(units_cooking_time_statistics)
     await answer_views(report_message, view, edit=True)
 
 
