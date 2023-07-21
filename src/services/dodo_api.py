@@ -1,6 +1,7 @@
 import asyncio
 import datetime
-from typing import Callable, Iterable, Any, TypeAlias
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, TypeAlias
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -12,6 +13,7 @@ from pydantic import parse_obj_as
 import models.api_responses.auth as auth_models
 import models.api_responses.dodo as models
 from core import exceptions
+from models.api_responses import UnitRestaurantCookingTimeStatisticsReport
 from services.api_responses import decode_response_json_or_raise_error
 from services.converters import UnitsConverter
 from services.http_client_factory import HTTPClient
@@ -26,6 +28,8 @@ __all__ = (
     'get_late_delivery_vouchers_for_today_and_week_before',
     'get_units_orders_handover_statistics',
 )
+
+from services.parsers import parse_kitchen_partial_statistics_html
 
 from services.period import Period
 from shortcuts import flatten
@@ -426,3 +430,59 @@ async def get_units_orders_handover_statistics(
         task.result() for task in tasks
     ]
     return flatten(units_orders_handover_statistics)
+
+
+async def get_unit_kitchen_operational_statistics(
+        *,
+        country_code: str,
+        cookies: Mapping[str, str] | dict[str, str],
+        http_client: httpx.AsyncClient,
+        unit_id: int,
+) -> UnitRestaurantCookingTimeStatisticsReport:
+    url = (
+        f'https://officemanager.dodopizza.{country_code}'
+        '/OfficeManager/OperationalStatistics/KitchenPartial'
+    )
+    query_parameters = {'unitId': unit_id}
+    response = await http_client.get(
+        url=url,
+        params=query_parameters,
+        cookies=cookies,
+    )
+    return parse_kitchen_partial_statistics_html(
+        unit_id=unit_id,
+        html=response.text,
+    )
+
+
+async def get_units_kitchen_operational_statistics(
+        *,
+        country_code: str,
+        http_client: httpx.AsyncClient,
+        units: UnitsConverter,
+        accounts_cookies: Iterable[auth_models.AccountCookies],
+) -> list[UnitRestaurantCookingTimeStatisticsReport]:
+    account_name_to_units = units.grouped_by_office_manager_account_name
+
+    async with asyncio.TaskGroup() as task_group:
+        tasks: list[asyncio.Task] = []
+
+        for account_cookies in accounts_cookies:
+
+            units_by_account_name = (
+                account_name_to_units[account_cookies.account_name]
+            )
+            for unit_id in units_by_account_name.ids:
+
+                tasks.append(
+                    task_group.create_task(
+                        get_unit_kitchen_operational_statistics(
+                            country_code=country_code,
+                            cookies=account_cookies.cookies,
+                            http_client=http_client,
+                            unit_id=unit_id,
+                        )
+                    )
+                )
+
+    return [task.result() for task in tasks]
