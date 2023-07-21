@@ -12,6 +12,7 @@ __all__ = (
     'get_message',
     'filter_units_by_ids',
     'edit_message_by_view',
+    'extract_message',
 )
 
 T = TypeVar('T')
@@ -43,6 +44,9 @@ def get_message(query: Message | CallbackQuery | Update) -> Message:
             return query.message
         case _:
             raise ValueError('Query must be Message, CallbackQuery or Update type')
+
+
+extract_message = get_message
 
 
 def filter_units_by_ids(

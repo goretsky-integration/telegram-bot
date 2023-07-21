@@ -21,7 +21,6 @@ from views import (
     RestaurantCookingTimeStatisticsView,
 )
 
-
 report_type_name_to_sales_channel = {
     'delivery_cooking_time': dodo_is_api_models.SalesChannel.DELIVERY,
     'restaurant_cooking_time': dodo_is_api_models.SalesChannel.DINE_IN,
@@ -100,14 +99,9 @@ async def on_cooking_time_statistics_report(
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(
         on_cooking_time_statistics_report,
-        Command(('delivery_cooking_time', 'restaurant_cooking_time')),
+        Command('delivery_cooking_time'),
     )
     dispatcher.register_callback_query_handler(
         on_cooking_time_statistics_report,
-        show_statistics.filter(
-            report_type_name=(
-                'DELIVERY_COOKING_TIME',
-                'RESTAURANT_COOKING_TIME',
-            ),
-        ),
+        show_statistics.filter(report_type_name='DELIVERY_COOKING_TIME'),
     )
